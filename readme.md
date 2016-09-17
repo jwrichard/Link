@@ -18,6 +18,7 @@ Link is application designed to help you efficiently find or meet up with your f
 - In session chat
 
 ## Images
+*Early draft! For concept only*
 ![Alt text](demo.png?raw=true "App Demo")
 
 ## Contributors
