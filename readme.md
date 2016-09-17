@@ -11,6 +11,7 @@ Link is application designed to help you efficiently find or meet up with your f
 - Settings panel to customize how often you send/recieve updates and control data usage
 - Recieve push notifications when others ask to Link up with you
 - Create group sessions to have multiple people in the same map
+
 ### Potential
 - Parental mode: Allow parents to set their childs device to enable Link sessions at any time to monitor location
 - Lost and found: Allow device location to be reported to users email address in case their phone is lost
