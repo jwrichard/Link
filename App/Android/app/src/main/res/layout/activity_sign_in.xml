@@ -16,24 +16,28 @@
         android:id="@+id/textView" />\
 
 
-    <com.facebook.login.widget.LoginButton
-        android:id="@+id/fb_login_button"
-        android:layout_width="fill_parent"
+    <Button
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
+        android:text="Sign in with Facebook"
+        android:id="@+id/fb_login_button"
+        android:layout_marginTop="37dp"
         android:layout_below="@+id/textView"
         android:layout_alignParentRight="true"
         android:layout_alignParentEnd="true"
-        android:layout_marginTop="44dp" />
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
 
-    <com.google.android.gms.common.SignInButton
-        android:id="@+id/g_login_button"
-        android:layout_width="fill_parent"
+    <Button
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="107dp"
-        android:layout_below="@+id/textView"
+        android:text="Sign in with Google"
+        android:id="@+id/g_login_button"
+        android:layout_below="@+id/fb_login_button"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_marginTop="47dp"
+        android:layout_alignRight="@+id/fb_login_button"
+        android:layout_alignEnd="@+id/fb_login_button" />
 
 </RelativeLayout>
