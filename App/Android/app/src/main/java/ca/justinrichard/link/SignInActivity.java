@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.amazonaws.mobile.AWSMobileClient;
 import com.amazonaws.mobile.user.IdentityManager;
 import com.amazonaws.mobile.user.IdentityProvider;
 import com.amazonaws.mobile.user.signin.FacebookSignInProvider;
@@ -19,6 +20,8 @@ import com.amazonaws.mobile.user.signin.GoogleSignInProvider;
 import com.amazonaws.mobile.user.signin.SignInManager;
 import com.amazonaws.mobile.user.signin.SignInProvider;
 import com.facebook.FacebookSdk;
+
+import org.json.JSONObject;
 
 public class SignInActivity extends Activity {
 
@@ -43,11 +46,36 @@ public class SignInActivity extends Activity {
          */
         @Override
         public void onSuccess(final IdentityProvider provider) {
-            // The sign-in manager is no longer needed once signed in.
+            // The sign-in manager is no longer needed once signed in
             SignInManager.dispose();
 
+            // Store users preferred name and image in Dynamo
+            IdentityManager idm = AWSMobileClient.defaultMobileClient().getIdentityManager();
+            String userId = idm.getCachedUserID();
+            String userName = idm.getCurrentIdentityProvider().getUserName();
+            String imageUrl = idm.getCurrentIdentityProvider().getUserImageUrl();
+            Log.i(LOG_TAG, "onSuccess: Attempting to add user information into Dynamo");
+            JSONObject payload = new JSONObject();
+            try {
+                Log.i(LOG_TAG, "onSuccess: userId - " + userId);
+                Log.i(LOG_TAG, "onSuccess: userName - " + userName);
+                Log.i(LOG_TAG, "onSuccess: imageUrl - " + imageUrl);
+                payload.put("userId", userId);
+                payload.put("userName", userName);
+                payload.put("imageUrl", imageUrl);
+                AmazonLambdaConnector aws = new AmazonLambdaConnector("updateUser", payload.toString()){
+                    @Override
+                    public void Callback(String result) {
+                        System.out.println("Result from AWS Lambda call: "+result);
+                    }
+                };
+                aws.Execute();
+            } catch(Exception e){
+                Log.e(LOG_TAG, "onSuccess: Failed to create JSON object to send to aws");
+            }
+
             // Go to home page
-            Intent intent = new Intent(SignInActivity.this, LinkHomeActivity.class);
+            Intent intent = new Intent(SignInActivity.this, MainActivity.class);
             startActivity(intent);
         }
 
