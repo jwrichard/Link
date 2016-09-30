@@ -1,5 +1,6 @@
 package ca.justinrichard.link;
 
+import android.content.Intent;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -21,9 +22,13 @@ import android.view.ViewGroup;
 
 import android.widget.TextView;
 
+import com.amazonaws.mobile.AWSMobileClient;
+
+import ca.justinrichard.link.dummy.DummyContent;
+
 import static java.lang.reflect.Modifier.FINAL;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ContactFragment.OnListFragmentInteractionListener {
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -40,6 +45,21 @@ public class MainActivity extends AppCompatActivity {
      */
     private ViewPager mViewPager;
     private String TAG = "MainActivity";
+
+    /**
+     * This interface must be implemented by activities that contain this
+     * fragment to allow an interaction in this fragment to be communicated
+     * to the activity and potentially other fragments contained in that
+     * activity.
+     * <p/>
+     * See the Android Training lesson <a href=
+     * "http://developer.android.com/training/basics/fragments/communicating.html"
+     * >Communicating with Other Fragments</a> for more information.
+     */
+    public void onListFragmentInteraction(DummyContent.DummyItem item){
+        // Do something
+        return;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             tabLayout.getTabAt(0).setIcon(R.drawable.ic_home);
             tabLayout.getTabAt(1).setIcon(R.drawable.ic_contacts);
-            tabLayout.getTabAt(2).setIcon(R.drawable.ic_search);
+            tabLayout.getTabAt(2).setIcon(R.drawable.ic_settings);
         } catch(Exception e){
             Log.e(TAG, "onCreate: Unable to set tab icons");
         }
@@ -96,13 +116,19 @@ public class MainActivity extends AppCompatActivity {
             return true;
         }
 
+        if (id == R.id.menu_logout) {
+            AWSMobileClient.defaultMobileClient().getIdentityManager().getCurrentIdentityProvider().signOut();
+            Intent intent = new Intent(MainActivity.this, SignInActivity.class);
+            startActivity(intent);
+        }
+
         return super.onOptionsItemSelected(item);
     }
 
     /**
      * A placeholder fragment containing a simple view.
      */
-    public static class PlaceholderFragment extends Fragment {
+    public static class PlaceholderFragment extends Fragment  {
         /**
          * The fragment argument representing the section number for this
          * fragment.
@@ -148,7 +174,10 @@ public class MainActivity extends AppCompatActivity {
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
             // Return a PlaceholderFragment (defined as a static inner class below).
-            return PlaceholderFragment.newInstance(position + 1);
+            switch(position){
+                case 1: return ContactFragment.newInstance(1);
+                default: return PlaceholderFragment.newInstance(position + 1);
+            }
         }
 
         @Override
