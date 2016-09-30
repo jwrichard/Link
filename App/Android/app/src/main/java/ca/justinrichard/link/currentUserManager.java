@@ -40,29 +40,9 @@ public class currentUserManager {
         this.provider = idm.getCurrentIdentityProvider().getCognitoLoginKey();
         this.loginToken = idm.getCurrentIdentityProvider().getToken();
 
-
         if(provider.equals("accounts.google.com")) {
-
-            // Instantiate the RequestQueue.
-            RequestQueue queue = Volley.newRequestQueue(context);
-            String url ="https://www.googleapis.com/plus/v1/people/me?access_token="+this.loginToken;
-            // Request a string response from the provided URL.
-            StringRequest stringRequest = new StringRequest(Request.Method.GET, url,
-                    new Response.Listener<String>() {
-                        @Override
-                        public void onResponse(String response) {
-                            // Display the first 500 characters of the response string.
-                            Log.w(TAG, "currentUserManager: Response from G+API:"+response.substring(0,500));
-                        }
-                    }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    Log.w(TAG, "currentUserManager: Response from G+API: Failed");
-                }
-            });
-            // Add the request to the RequestQueue.
-            queue.add(stringRequest);
-
+            // Call reloadUserInfo on separate thread and put results into db
+            new GoogleUpdate().execute();
 
         } else if(provider.equals("graph.facebook.com")) {
             // Retrieve access token
@@ -74,7 +54,7 @@ public class currentUserManager {
                 @Override
                 public void onCompleted(JSONObject object, GraphResponse response) {
                     // Handle response by updating dynamo
-                    new UpdateDynamoAsync().execute(object);
+                    new FacebookUpdate().execute(object);
                 }
             });
             Bundle parameters = new Bundle();
@@ -87,8 +67,7 @@ public class currentUserManager {
         }
     }
 
-
-    private class UpdateDynamoAsync extends AsyncTask<JSONObject, Void, Void> {
+    private class FacebookUpdate extends AsyncTask<JSONObject, Void, Void> {
         @Override
         protected Void doInBackground(JSONObject... objects) {
             // Fetch the default configured DynamoDB ObjectMapper
@@ -102,6 +81,33 @@ public class currentUserManager {
                 dynamoDBMapper.save(user);
             } catch(JSONException e){
                 Log.w(TAG, "doInBackground: Failed to parse JSON and update DB");
+            }
+            return null;
+        }
+    }
+
+    private class GoogleUpdate extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... objects) {
+            // Fetch the default configured DynamoDB ObjectMapper
+            final DynamoDBMapper dynamoDBMapper = AWSMobileClient.defaultMobileClient().getDynamoDBMapper();
+            final UsersDO user = new UsersDO();
+            user.setUserId(AWSMobileClient.defaultMobileClient().getIdentityManager().getCachedUserID());
+            try {
+                IdentityManager idm = AWSMobileClient.defaultMobileClient().getIdentityManager();
+                idm.getCurrentIdentityProvider().reloadUserInfo();
+                String fullName = idm.getCurrentIdentityProvider().getUserName();
+                String firstName = fullName.substring(0, fullName.indexOf(" "));
+                String lastName = fullName.substring(fullName.indexOf(" "));
+                String imageUrl = idm.getCurrentIdentityProvider().getUserImageUrl();
+
+                user.setFirstName(firstName);
+                user.setLastName(lastName);
+                user.setImageUrl(imageUrl);
+
+                dynamoDBMapper.save(user);
+            } catch(Exception e){
+                Log.w(TAG, "doInBackground: Handled exception:"+e);
             }
             return null;
         }

@@ -1,10 +1,12 @@
 package ca.justinrichard.link;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.support.design.widget.TabLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
@@ -24,9 +26,11 @@ import android.widget.TextView;
 
 import com.amazonaws.mobile.AWSMobileClient;
 
-import ca.justinrichard.link.dummy.DummyContent;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Date;
 
-import static java.lang.reflect.Modifier.FINAL;
+import ca.justinrichard.link.dummy.DummyContent;
 
 public class MainActivity extends AppCompatActivity implements ContactFragment.OnListFragmentInteractionListener {
 
@@ -65,6 +69,9 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Start separate thread which will update conversation lists since its first tab open
+        new GetConversationList().execute();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -123,6 +130,41 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Async task to update the list of conversations
+     */
+    private class GetConversationList extends AsyncTask<Void, Void, Boolean> {
+        protected Boolean doInBackground(Void... nothings) {
+            // Get last timestamp we updated from preferences so we can request a delta
+            SharedPreferences settings = getPreferences(MODE_PRIVATE);
+            long lastUpdate = settings.getLong("lastLinksUpdate", 0);
+
+            // Get conversation changes since last update
+
+
+            // Append changes into our data store for links
+            String string = "tester";
+            try {
+                FileOutputStream fos = openFileOutput("linksData", Context.MODE_APPEND);
+                fos.write(string.getBytes());
+                fos.close();
+            } catch(IOException e){
+                Log.e(TAG, "doInBackground: IO Exception:" + e);
+                return false;
+            }
+
+            // Update preferences to set last update to now
+            SharedPreferences.Editor editor = settings.edit();
+            Date d = new Date();
+            editor.putLong("lastLinksUpdate", d.getTime());
+            editor.commit();
+            return true;
+        }
+        protected void onPostExecute(Boolean success) {
+            // Tell the UI to update the list of links based on the updated data store
+        }
     }
 
     /**
