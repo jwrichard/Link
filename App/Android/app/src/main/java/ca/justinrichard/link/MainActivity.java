@@ -15,6 +15,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -25,14 +26,19 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.amazonaws.mobile.AWSMobileClient;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
+import com.amazonaws.models.nosql.ContactsDO;
+import com.amazonaws.models.nosql.LinksDO;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 
-import ca.justinrichard.link.dummy.DummyContent;
-
-public class MainActivity extends AppCompatActivity implements ContactFragment.OnListFragmentInteractionListener {
+public class MainActivity extends AppCompatActivity implements ContactFragment.OnFragmentInteractionListener {
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -43,6 +49,7 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
      * {@link android.support.v4.app.FragmentStatePagerAdapter}.
      */
     private SectionsPagerAdapter mSectionsPagerAdapter;
+    private FragmentManager mFragmentManager;
 
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -60,7 +67,7 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
      * "http://developer.android.com/training/basics/fragments/communicating.html"
      * >Communicating with Other Fragments</a> for more information.
      */
-    public void onListFragmentInteraction(DummyContent.DummyItem item){
+    public void onFragmentInteraction(String s){
         // Do something
         return;
     }
@@ -77,17 +84,21 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
         setSupportActionBar(toolbar);
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
-        mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
+        mFragmentManager = getSupportFragmentManager();
+        mSectionsPagerAdapter = new SectionsPagerAdapter(mFragmentManager);
 
         // Set up the ViewPager with the sections adapter.
         mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
+        mViewPager.setCurrentItem(1, false);
+        mViewPager.setOffscreenPageLimit(3);
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
+
         try {
-            tabLayout.getTabAt(0).setIcon(R.drawable.ic_home);
-            tabLayout.getTabAt(1).setIcon(R.drawable.ic_contacts);
+            tabLayout.getTabAt(0).setIcon(R.drawable.ic_contacts);
+            tabLayout.getTabAt(1).setIcon(R.drawable.ic_home);
             tabLayout.getTabAt(2).setIcon(R.drawable.ic_settings);
         } catch(Exception e){
             Log.e(TAG, "onCreate: Unable to set tab icons");
@@ -100,9 +111,7 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG).setAction("Action", null).show();
             }
         });
-
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -133,6 +142,58 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
     }
 
     /**
+     * Async task to update the list of contacts
+     */
+    private class GetContactsList extends AsyncTask<Void, Void, PaginatedQueryList<ContactsDO>> {
+        protected PaginatedQueryList<ContactsDO> doInBackground(Void... nothings) {
+            // Get my UserId
+            String myUserId = AWSMobileClient.defaultMobileClient().getIdentityManager().getCachedUserID();
+            Log.i(TAG, "Found userId: "+myUserId);
+
+            // Get all of my contacts
+            try {
+                final DynamoDBMapper dynamoDBMapper = AWSMobileClient.defaultMobileClient().getDynamoDBMapper();
+                ContactsDO withThisContact = new ContactsDO();
+                withThisContact.setUserId(myUserId);
+
+                DynamoDBQueryExpression<ContactsDO> query = new DynamoDBQueryExpression<ContactsDO>().withHashKeyValues(withThisContact).withConsistentRead(false);
+                return dynamoDBMapper.query(ContactsDO.class, query);
+            } catch(NullPointerException e){
+                Log.e(TAG, "FAILED to get contacts from DB, query failed");
+                return null;
+            }
+        }
+        protected void onPostExecute(PaginatedQueryList<ContactsDO> contacts) {
+            // Take paginated query list and store it for the listView to read from
+            ArrayList<String> contactsArray = new ArrayList<String>();
+            Iterator<ContactsDO> contactIterator = contacts.iterator();
+            while(contactIterator.hasNext()){
+                ContactsDO element = contactIterator.next();
+                contactsArray.add(element.getContactUserId());
+            }
+
+            // Store list of contacts
+            SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = sharedPref.edit();
+            editor.putString("contacts", TextUtils.join(",", contactsArray));
+            editor.commit();
+
+            /*
+            // Get our fragment to interact with
+            try {
+                ContactFragment fragment = (ContactFragment) mFragmentManager.findFragmentById(R.id.fragment_contact);
+                // Loop through contacts and add them all to the listView
+                for(String s: contactsArray) {
+                    fragment.addItems(fragment.getView(), s);
+                }
+            } catch(Exception e){
+                Log.e(TAG, "FAILED !"+e);
+            }
+            */
+        }
+    }
+
+    /**
      * Async task to update the list of conversations
      */
     private class GetConversationList extends AsyncTask<Void, Void, Boolean> {
@@ -142,9 +203,12 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
             long lastUpdate = settings.getLong("lastLinksUpdate", 0);
 
             // Get conversation changes since last update
+            // SQL Eq - Select * from links where lastUpdate > this.lastUpdate
+            final DynamoDBMapper dynamoDBMapper = AWSMobileClient.defaultMobileClient().getDynamoDBMapper();
+            LinksDO linkToFind = new LinksDO();
 
 
-            // Append changes into our data store for links
+            // Update
             String string = "tester";
             try {
                 FileOutputStream fos = openFileOutput("linksData", Context.MODE_APPEND);
@@ -166,42 +230,6 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
             // Tell the UI to update the list of links based on the updated data store
         }
     }
-
-    /**
-     * A placeholder fragment containing a simple view.
-     */
-    public static class PlaceholderFragment extends Fragment  {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
-        private static final String ARG_SECTION_NUMBER = "section_number";
-
-        public PlaceholderFragment() {
-        }
-
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
-        public static PlaceholderFragment newInstance(int sectionNumber) {
-            PlaceholderFragment fragment = new PlaceholderFragment();
-            Bundle args = new Bundle();
-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-            fragment.setArguments(args);
-            return fragment;
-        }
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-            View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-            textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
-            return rootView;
-        }
-    }
-
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
@@ -215,10 +243,13 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
         @Override
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
-            // Return a PlaceholderFragment (defined as a static inner class below).
             switch(position){
-                case 1: return ContactFragment.newInstance(1);
-                default: return PlaceholderFragment.newInstance(position + 1);
+                case 1: Fragment f = ContactFragment.newInstance();
+                        new GetContactsList().execute();
+                        return f;
+                case 2: return ContactFragment.newInstance();
+                case 3: return ContactFragment.newInstance();
+                default: return ContactFragment.newInstance();
             }
         }
 

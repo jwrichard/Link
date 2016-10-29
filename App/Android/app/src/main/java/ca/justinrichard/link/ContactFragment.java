@@ -1,86 +1,106 @@
 package ca.justinrichard.link;
 
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
-import ca.justinrichard.link.dummy.DummyContent;
-import ca.justinrichard.link.dummy.DummyContent.DummyItem;
-
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+
 /**
- * A fragment representing a list of Items.
- * <p/>
- * Activities containing this fragment MUST implement the {@link OnListFragmentInteractionListener}
- * interface.
+ * A simple {@link Fragment} subclass.
+ * Activities that contain this fragment must implement the
+ * {@link ContactFragment.OnFragmentInteractionListener} interface
+ * to handle interaction events.
+ * Use the {@link ContactFragment#newInstance} factory method to
+ * create an instance of this fragment.
  */
 public class ContactFragment extends Fragment {
 
-    // TODO: Customize parameter argument names
-    private static final String ARG_COLUMN_COUNT = "column-count";
-    // TODO: Customize parameters
-    private int mColumnCount = 1;
-    private OnListFragmentInteractionListener mListener;
+    // Our list of contacts
+    ArrayList<String> listContacts = new ArrayList<>();
 
-    /**
-     * Mandatory empty constructor for the fragment manager to instantiate the
-     * fragment (e.g. upon screen orientation changes).
-     */
+    // List adapter
+    ArrayAdapter<String> adapter;
+
+    private OnFragmentInteractionListener mListener;
+
     public ContactFragment() {
+        // Required empty public constructor
     }
 
-    // TODO: Customize parameter initialization
-    @SuppressWarnings("unused")
-    public static ContactFragment newInstance(int columnCount) {
+    /**
+     * Use this factory method to create a new instance of
+     * this fragment using the provided parameters.
+     *
+     * @return A new instance of fragment ContactFragment.
+     */
+    // TODO: Rename and change types and number of parameters
+    public static ContactFragment newInstance() {
         ContactFragment fragment = new ContactFragment();
-        Bundle args = new Bundle();
-        args.putInt(ARG_COLUMN_COUNT, columnCount);
-        fragment.setArguments(args);
         return fragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        if (getArguments() != null) {
-            mColumnCount = getArguments().getInt(ARG_COLUMN_COUNT);
-        }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_contact_list, container, false);
+        // Inflate the layout for this fragment
+        View view = inflater.inflate(R.layout.fragment_contact, container, false);
 
-        // Set the adapter
-        if (view instanceof RecyclerView) {
-            Context context = view.getContext();
-            RecyclerView recyclerView = (RecyclerView) view;
-            if (mColumnCount <= 1) {
-                recyclerView.setLayoutManager(new LinearLayoutManager(context));
-            } else {
-                recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
-            }
-            recyclerView.setAdapter(new MyContactRecyclerViewAdapter(DummyContent.ITEMS, mListener));
+        // Define an adapter for our list view so we can add items
+        ListView listView = (ListView) view.findViewById(R.id.contactsListView);
+
+        // Add items from stored data
+        SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
+        String contactString = sharedPref.getString("contacts", "No contacts found :(");
+        List<String> items = Arrays.asList(contactString.split("\\s*,\\s*"));
+        for(String s: items){
+            listContacts.add(s);
         }
+
+        // Set and add the adapter to the listView
+        adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, listContacts);
+        listView.setAdapter(adapter);
+
         return view;
     }
 
+    // Dynamically add new list item
+    public void addItems(View v, String s){
+        listContacts.add(s);
+        adapter.notifyDataSetChanged();
+    }
+
+    // TODO: Rename method, update argument and hook method into UI event
+    public void onButtonPressed(String s) {
+        if (mListener != null) {
+            mListener.onFragmentInteraction(s);
+        }
+    }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        if (context instanceof OnListFragmentInteractionListener) {
-            mListener = (OnListFragmentInteractionListener) context;
+        if (context instanceof OnFragmentInteractionListener) {
+            mListener = (OnFragmentInteractionListener) context;
         } else {
-            throw new RuntimeException(context.toString() + " must implement OnListFragmentInteractionListener");
+            throw new RuntimeException(context.toString() + " must implement OnFragmentInteractionListener");
         }
     }
 
@@ -95,13 +115,13 @@ public class ContactFragment extends Fragment {
      * fragment to allow an interaction in this fragment to be communicated
      * to the activity and potentially other fragments contained in that
      * activity.
-     * <p/>
+     * <p>
      * See the Android Training lesson <a href=
      * "http://developer.android.com/training/basics/fragments/communicating.html"
      * >Communicating with Other Fragments</a> for more information.
      */
-    public interface OnListFragmentInteractionListener {
+    public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
-        void onListFragmentInteraction(DummyItem item);
+        void onFragmentInteraction(String s);
     }
 }
