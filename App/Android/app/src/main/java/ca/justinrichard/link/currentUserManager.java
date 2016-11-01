@@ -1,6 +1,5 @@
 package ca.justinrichard.link;
 
-import android.app.Activity;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -13,12 +12,6 @@ import org.json.JSONObject;
 
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.models.nosql.UsersDO;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
 import com.facebook.AccessToken;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
@@ -29,13 +22,13 @@ import static com.facebook.AccessToken.getCurrentAccessToken;
  * Created by Justin on 9/29/2016.
  */
 
-public class currentUserManager {
+public class CurrentUserManager {
     private final String TAG = "CurrentUserManagerClass";
 
     private String provider;
     private String loginToken;
 
-    public currentUserManager(Context context) {
+    public CurrentUserManager(Context context) {
         IdentityManager idm = AWSMobileClient.defaultMobileClient().getIdentityManager();
         this.provider = idm.getCurrentIdentityProvider().getCognitoLoginKey();
         this.loginToken = idm.getCurrentIdentityProvider().getToken();

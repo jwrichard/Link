@@ -5,6 +5,8 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.widget.SwipeRefreshLayout;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -35,6 +37,9 @@ public class ContactFragment extends Fragment {
     // List adapter
     ArrayAdapter<String> adapter;
 
+    // Refresh Layout obj
+    SwipeRefreshLayout mSwipeRefreshLayout;
+
     private OnFragmentInteractionListener mListener;
 
     public ContactFragment() {
@@ -63,6 +68,16 @@ public class ContactFragment extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_contact, container, false);
 
+        // Get our swipe refresh handler
+        mSwipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.swiperefreshcontacts);
+        mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                refreshContent();
+            }
+        });
+
+
         // Define an adapter for our list view so we can add items
         ListView listView = (ListView) view.findViewById(R.id.contactsListView);
 
@@ -82,9 +97,21 @@ public class ContactFragment extends Fragment {
     }
 
     // Dynamically add new list item
-    public void addItems(View v, String s){
-        listContacts.add(s);
+    public void refreshContent(){
+        // Empty all items
+        listContacts.clear();
+
+        // Add items from stored data
+        SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
+        String contactString = sharedPref.getString("contacts", "No contacts found :(");
+        List<String> items = Arrays.asList(contactString.split("\\s*,\\s*"));
+        for(String s: items){
+            listContacts.add(s);
+        }
+
+        // Tell adapter to update the list
         adapter.notifyDataSetChanged();
+        mSwipeRefreshLayout.setRefreshing(false);
     }
 
     // TODO: Rename method, update argument and hook method into UI event

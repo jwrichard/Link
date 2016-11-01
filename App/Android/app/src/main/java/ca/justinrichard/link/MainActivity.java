@@ -17,13 +17,9 @@ import android.support.v4.view.ViewPager;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-
-import android.widget.TextView;
 
 import com.amazonaws.mobile.AWSMobileClient;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
@@ -31,12 +27,15 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExp
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.amazonaws.models.nosql.ContactsDO;
 import com.amazonaws.models.nosql.LinksDO;
+import com.amazonaws.models.nosql.UsersDO;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+
+import static android.R.attr.fragment;
 
 public class MainActivity extends AppCompatActivity implements ContactFragment.OnFragmentInteractionListener {
 
@@ -144,8 +143,8 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
     /**
      * Async task to update the list of contacts
      */
-    private class GetContactsList extends AsyncTask<Void, Void, PaginatedQueryList<ContactsDO>> {
-        protected PaginatedQueryList<ContactsDO> doInBackground(Void... nothings) {
+    private class GetContactsList extends AsyncTask<Void, Void, ArrayList<String>> {
+        protected ArrayList<String> doInBackground(Void... nothings) {
             // Get my UserId
             String myUserId = AWSMobileClient.defaultMobileClient().getIdentityManager().getCachedUserID();
             Log.i(TAG, "Found userId: "+myUserId);
@@ -157,39 +156,39 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
                 withThisContact.setUserId(myUserId);
 
                 DynamoDBQueryExpression<ContactsDO> query = new DynamoDBQueryExpression<ContactsDO>().withHashKeyValues(withThisContact).withConsistentRead(false);
-                return dynamoDBMapper.query(ContactsDO.class, query);
+                PaginatedQueryList<ContactsDO> contacts = dynamoDBMapper.query(ContactsDO.class, query);
+
+                DynamoDB db = new DynamoDB();
+                ArrayList<String> contactsArray = new ArrayList<String>();
+                Iterator<ContactsDO> contactIterator = contacts.iterator();
+                while(contactIterator.hasNext()){
+                    ContactsDO element = contactIterator.next();
+                    UsersDO user = db.GetUserFromUserId(element.getContactUserId());
+                    if(user != null){
+                        contactsArray.add(user.getFirstName()+user.getLastName());
+                    } else {
+                        contactsArray.add(element.getContactUserId());
+                    }
+                }
+                return contactsArray;
+
             } catch(NullPointerException e){
                 Log.e(TAG, "FAILED to get contacts from DB, query failed");
                 return null;
             }
         }
-        protected void onPostExecute(PaginatedQueryList<ContactsDO> contacts) {
-            // Take paginated query list and store it for the listView to read from
-            ArrayList<String> contactsArray = new ArrayList<String>();
-            Iterator<ContactsDO> contactIterator = contacts.iterator();
-            while(contactIterator.hasNext()){
-                ContactsDO element = contactIterator.next();
-                contactsArray.add(element.getContactUserId());
-            }
-
+        protected void onPostExecute(ArrayList<String> contacts) {
             // Store list of contacts
+            Log.i(TAG, "Got contacts list: "+TextUtils.join(",", contacts));
+
             SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putString("contacts", TextUtils.join(",", contactsArray));
+            editor.putString("contacts", TextUtils.join(",", contacts));
             editor.commit();
 
-            /*
-            // Get our fragment to interact with
-            try {
-                ContactFragment fragment = (ContactFragment) mFragmentManager.findFragmentById(R.id.fragment_contact);
-                // Loop through contacts and add them all to the listView
-                for(String s: contactsArray) {
-                    fragment.addItems(fragment.getView(), s);
-                }
-            } catch(Exception e){
-                Log.e(TAG, "FAILED !"+e);
-            }
-            */
+            // Tell the fragment to update its list
+            ContactFragment fragment = (ContactFragment) mFragmentManager.findFragmentById(R.id.swiperefreshcontacts);
+            if(fragment != null) fragment.refreshContent();
         }
     }
 

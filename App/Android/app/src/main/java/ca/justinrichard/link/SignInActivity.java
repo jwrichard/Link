@@ -20,8 +20,6 @@ import com.amazonaws.mobile.user.signin.SignInManager;
 import com.amazonaws.mobile.user.signin.SignInProvider;
 import com.facebook.FacebookSdk;
 
-import org.json.JSONObject;
-
 public class SignInActivity extends Activity {
 
     private SignInManager signInManager;
@@ -51,7 +49,7 @@ public class SignInActivity extends Activity {
             // Store users preferred name and image in Dynamo
 
             // First get info from manager
-            currentUserManager um = new currentUserManager(getApplicationContext());
+            CurrentUserManager um = new CurrentUserManager(getApplicationContext());
 
            /* Log.i(LOG_TAG, "onSuccess: Attempting to add user information into Dynamo");
             JSONObject payload = new JSONObject();
