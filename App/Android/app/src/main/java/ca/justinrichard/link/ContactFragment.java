@@ -2,23 +2,35 @@ package ca.justinrichard.link;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
+import android.widget.AdapterView;
+import android.widget.ListView;
+import android.widget.PopupMenu;
+import android.widget.Toast;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+
+import java.util.Iterator;
+
+import ca.justinrichard.link.adapters.ContactAdapter;
+import ca.justinrichard.link.models.Contact;
+
+import static com.facebook.FacebookSdk.getApplicationContext;
 
 
 /**
@@ -31,11 +43,13 @@ import java.util.List;
  */
 public class ContactFragment extends Fragment {
 
+    final String TAG = "ContactFragment";
+
     // Our list of contacts
-    ArrayList<String> listContacts = new ArrayList<>();
+    ArrayList<Contact> listContacts = new ArrayList<Contact>();
 
     // List adapter
-    ArrayAdapter<String> adapter;
+    ContactAdapter adapter;
 
     // Refresh Layout obj
     SwipeRefreshLayout mSwipeRefreshLayout;
@@ -77,21 +91,43 @@ public class ContactFragment extends Fragment {
             }
         });
 
-
         // Define an adapter for our list view so we can add items
-        ListView listView = (ListView) view.findViewById(R.id.contactsListView);
-
-        // Add items from stored data
-        SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
-        String contactString = sharedPref.getString("contacts", "No contacts found :(");
-        List<String> items = Arrays.asList(contactString.split("\\s*,\\s*"));
-        for(String s: items){
-            listContacts.add(s);
-        }
+        final ListView listView = (ListView) view.findViewById(R.id.contactsListView);
 
         // Set and add the adapter to the listView
-        adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, listContacts);
+        adapter = new ContactAdapter(getActivity(), listContacts);
         listView.setAdapter(adapter);
+
+        // Handle list item clicks
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                Log.i(TAG, "List item clicked at position "+i+" with id "+l);
+                Contact c = (Contact)listView.getItemAtPosition(i);
+                Log.i(TAG, c.toString());
+
+                PopupMenu popup = new PopupMenu(getActivity(), view);
+                MenuInflater inflater = popup.getMenuInflater();
+                inflater.inflate(R.menu.menu_contact, popup.getMenu());
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        if(item.getTitle() == "Link up"){
+                            // Call function to handle a request to link up - use existing session if one, otherwise create one
+                            createLinkSsession(); // TODO
+
+                        } else if(item.getTitle() == "Remove contact"){
+                            Toast.makeText(getApplicationContext(), "Feature not yet available", Toast.LENGTH_SHORT).show();
+                        }
+                        return true;
+                    }
+                });
+                popup.show();
+            }
+        });
+
+        // Fill out the content
+        refreshContent();
 
         return view;
     }
@@ -103,22 +139,27 @@ public class ContactFragment extends Fragment {
 
         // Add items from stored data
         SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
-        String contactString = sharedPref.getString("contacts", "No contacts found :(");
-        List<String> items = Arrays.asList(contactString.split("\\s*,\\s*"));
-        for(String s: items){
-            listContacts.add(s);
+        String contactString = sharedPref.getString("contacts", "");
+
+        // Turn contacts JSON to ArrayList of contact objects
+        Gson gson = new GsonBuilder().create();
+        Type listType = new TypeToken<ArrayList<Contact>>() {}.getType();
+        ArrayList<Contact> contacts;
+        try {
+            contacts = gson.fromJson(contactString, listType);
+            // Loop through ArrayList of objects and add to the adapter
+            Iterator<Contact> contactIterator = contacts.iterator();
+            while(contactIterator.hasNext()){
+                Contact c = contactIterator.next();
+                listContacts.add(c);
+            }
+        } catch(com.google.gson.JsonSyntaxException ex){
+            Log.e("ContactFragment", "Failed to read JSON from shared prefs");
         }
 
         // Tell adapter to update the list
         adapter.notifyDataSetChanged();
         mSwipeRefreshLayout.setRefreshing(false);
-    }
-
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(String s) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(s);
-        }
     }
 
     @Override

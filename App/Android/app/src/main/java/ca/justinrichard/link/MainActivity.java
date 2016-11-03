@@ -28,12 +28,20 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryLi
 import com.amazonaws.models.nosql.ContactsDO;
 import com.amazonaws.models.nosql.LinksDO;
 import com.amazonaws.models.nosql.UsersDO;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+
+import ca.justinrichard.link.models.Contact;
 
 import static android.R.attr.fragment;
 
@@ -92,9 +100,9 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
         mViewPager.setCurrentItem(1, false);
         mViewPager.setOffscreenPageLimit(3);
 
+        // Set up tab layout
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
-
         try {
             tabLayout.getTabAt(0).setIcon(R.drawable.ic_contacts);
             tabLayout.getTabAt(1).setIcon(R.drawable.ic_home);
@@ -103,6 +111,11 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
             Log.e(TAG, "onCreate: Unable to set tab icons");
         }
 
+        // Create global config for image loader and apply to singleton
+        ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(this).build();
+        ImageLoader.getInstance().init(config);
+
+        // Set up floating action button
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -143,47 +156,55 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
     /**
      * Async task to update the list of contacts
      */
-    private class GetContactsList extends AsyncTask<Void, Void, ArrayList<String>> {
-        protected ArrayList<String> doInBackground(Void... nothings) {
+    private class GetContactsList extends AsyncTask<Void, Void, ArrayList<Contact>> {
+        protected ArrayList<Contact> doInBackground(Void... nothings) {
             // Get my UserId
             String myUserId = AWSMobileClient.defaultMobileClient().getIdentityManager().getCachedUserID();
             Log.i(TAG, "Found userId: "+myUserId);
 
             // Get all of my contacts
             try {
+                // Create db mapper and build object to reference in query
                 final DynamoDBMapper dynamoDBMapper = AWSMobileClient.defaultMobileClient().getDynamoDBMapper();
                 ContactsDO withThisContact = new ContactsDO();
                 withThisContact.setUserId(myUserId);
 
+                // Create and run query to get contacts for current user
                 DynamoDBQueryExpression<ContactsDO> query = new DynamoDBQueryExpression<ContactsDO>().withHashKeyValues(withThisContact).withConsistentRead(false);
                 PaginatedQueryList<ContactsDO> contacts = dynamoDBMapper.query(ContactsDO.class, query);
 
+                // Create an array of contact objects from the db result
                 DynamoDB db = new DynamoDB();
-                ArrayList<String> contactsArray = new ArrayList<String>();
+                ArrayList<Contact> contactsArray = new ArrayList<>();
                 Iterator<ContactsDO> contactIterator = contacts.iterator();
                 while(contactIterator.hasNext()){
                     ContactsDO element = contactIterator.next();
                     UsersDO user = db.GetUserFromUserId(element.getContactUserId());
+                    Contact c = new Contact(user.getImageUrl(), user.getFirstName()+" "+user.getLastName(), element.getContactUserId());
                     if(user != null){
-                        contactsArray.add(user.getFirstName()+user.getLastName());
-                    } else {
-                        contactsArray.add(element.getContactUserId());
+                        contactsArray.add(c);
                     }
                 }
                 return contactsArray;
-
             } catch(NullPointerException e){
                 Log.e(TAG, "FAILED to get contacts from DB, query failed");
                 return null;
             }
         }
-        protected void onPostExecute(ArrayList<String> contacts) {
+        protected void onPostExecute(ArrayList<Contact> contacts) {
             // Store list of contacts
             Log.i(TAG, "Got contacts list: "+TextUtils.join(",", contacts));
 
+            // Turn list of contacts into JSON
+            Gson gson = new GsonBuilder().create();
+            Type listType = new TypeToken<ArrayList<Contact>>() {}.getType();
+            String jsonString = gson.toJson(contacts, listType);
+            Log.i(TAG, "JSON RESULT:"+jsonString);
+
+            // Store JSON result into shared prefs (WIll have some limit, 1.4mb or something? 1/8th of total app mem? Future concern)
             SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
             SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putString("contacts", TextUtils.join(",", contacts));
+            editor.putString("contacts", jsonString);
             editor.commit();
 
             // Tell the fragment to update its list
@@ -205,7 +226,6 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
             // SQL Eq - Select * from links where lastUpdate > this.lastUpdate
             final DynamoDBMapper dynamoDBMapper = AWSMobileClient.defaultMobileClient().getDynamoDBMapper();
             LinksDO linkToFind = new LinksDO();
-
 
             // Update
             String string = "tester";

@@ -1,0 +1,11 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item android:title="Link up"
+        android:id="@+id/menu_link_new"
+        android:orderInCategory="100"/>
+
+    <item android:title="Remove contact"
+        android:id="@+id/menu_contact_remove"
+        android:orderInCategory="200"/>
+</menu>
