@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -12,12 +13,16 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import com.amazonaws.mobile.AWSMobileClient;
 import com.amazonaws.mobile.user.IdentityManager;
 import com.amazonaws.mobile.user.IdentityProvider;
 import com.amazonaws.mobile.user.signin.FacebookSignInProvider;
 import com.amazonaws.mobile.user.signin.GoogleSignInProvider;
 import com.amazonaws.mobile.user.signin.SignInManager;
 import com.amazonaws.mobile.user.signin.SignInProvider;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
+import com.amazonaws.models.nosql.UsersDO;
+import com.amazonaws.util.StringUtils;
 import com.facebook.FacebookSdk;
 
 public class SignInActivity extends Activity {
@@ -46,31 +51,15 @@ public class SignInActivity extends Activity {
             // The sign-in manager is no longer needed once signed in
             SignInManager.dispose();
 
-            // Store users preferred name and image in Dynamo
+            // Get and save information about the user from either Google or Facebook
+            new CurrentUserManager(getApplicationContext());
 
-            // First get info from manager
-            CurrentUserManager um = new CurrentUserManager(getApplicationContext());
+            // Check if user has a username, if they do, then we can skip the username picker
+            new CheckUsernameSetTask().execute();
 
-           /* Log.i(LOG_TAG, "onSuccess: Attempting to add user information into Dynamo");
-            JSONObject payload = new JSONObject();
-            try {
-                payload.put("userId", "");
-                payload.put("userName", "");
-                payload.put("imageUrl", "");
-                AmazonLambdaConnector aws = new AmazonLambdaConnector("updateUser", payload.toString()){
-                    @Override
-                    public void Callback(String result) {
-                        System.out.println("Result from AWS Lambda call: "+result);
-                    }
-                };
-                aws.Execute();
-            } catch(Exception e){
-                Log.e(LOG_TAG, "onSuccess: Failed to create JSON object to send to aws");
-            } */
-
-            // Go to home page
-            Intent intent = new Intent(SignInActivity.this, MainActivity.class);
-            startActivity(intent);
+            // Go to the username selection activity, if one already picked, we will skip by it
+            //Intent intent = new Intent(SignInActivity.this, UsernamePickerActivity.class);
+            //startActivity(intent);
         }
 
         /**
@@ -104,6 +93,8 @@ public class SignInActivity extends Activity {
             int duration = Toast.LENGTH_LONG;
             Toast toast = Toast.makeText(context, text, duration);
             toast.show();
+
+            // TODO: Clear saved credentials or something to fix bug where can't sign in with googlez
         }
     }
 
@@ -171,7 +162,49 @@ public class SignInActivity extends Activity {
         signInManager.handleActivityResult(requestCode, resultCode, data);
     }
 
-    // ... handle other activity life cycle events here if needed
-    //     such as instrumenting onResume and onPause for Mobile Analytics ...
+    /**
+     * A asynchronous task used to check if username is set for the current user
+     */
+    public class CheckUsernameSetTask extends AsyncTask<Void, Void, Boolean> {
+        private final String mUserId;
+
+        CheckUsernameSetTask() {
+            mUserId = AWSMobileClient.defaultMobileClient().getIdentityManager().getCachedUserID();
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            // Check to see if username is taken, if so, who the owner is
+            DynamoDB db = new DynamoDB();
+            UsersDO user = db.GetUserFromUserId(mUserId);
+            //Log.i(LOG_TAG, "Checking if I have username, user: "+user.getUserId()+", "+user.getUsername());
+            if(user == null){
+                // Go to sign in activity
+                Intent intent = new Intent(SignInActivity.this, SignInActivity.class);
+                startActivity(intent);
+                Log.wtf(LOG_TAG, "Failed to get current signed in user, should rediect to sign in page");
+                return true; // Should never get here!
+            } else {
+                if(user.getUsername() == null){
+                    // Does not have a username
+                    return false;
+                } else {
+                    // User has a username
+                    return true;
+                }
+            }
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean hasUsername) {
+            if (hasUsername){
+                Intent intent = new Intent(SignInActivity.this, MainActivity.class);
+                startActivity(intent);
+            } else {
+                Intent intent = new Intent(SignInActivity.this, UsernamePickerActivity.class);
+                startActivity(intent);
+            }
+        }
+    }
 
 }

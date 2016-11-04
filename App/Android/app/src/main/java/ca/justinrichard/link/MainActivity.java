@@ -180,7 +180,7 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
                 while(contactIterator.hasNext()){
                     ContactsDO element = contactIterator.next();
                     UsersDO user = db.GetUserFromUserId(element.getContactUserId());
-                    Contact c = new Contact(user.getImageUrl(), user.getFirstName()+" "+user.getLastName(), element.getContactUserId());
+                    Contact c = new Contact(user.getImageUrl(), user.getFirstName()+" "+user.getLastName(), user.getUsername());
                     if(user != null){
                         contactsArray.add(c);
                     }

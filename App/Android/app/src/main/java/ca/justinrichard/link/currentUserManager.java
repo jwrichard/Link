@@ -3,6 +3,7 @@ package ca.justinrichard.link;
 import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.style.DynamicDrawableSpan;
 import android.util.Log;
 import com.amazonaws.mobile.AWSMobileClient;
 import com.amazonaws.mobile.user.IdentityManager;
@@ -65,13 +66,21 @@ public class CurrentUserManager {
         protected Void doInBackground(JSONObject... objects) {
             // Fetch the default configured DynamoDB ObjectMapper
             final DynamoDBMapper dynamoDBMapper = AWSMobileClient.defaultMobileClient().getDynamoDBMapper();
-            final UsersDO user = new UsersDO();
-            user.setUserId(AWSMobileClient.defaultMobileClient().getIdentityManager().getCachedUserID());
+            final DynamoDB db = new DynamoDB();
             try {
+                // Check to see if user exists, if so, update that entry, otherwise create a new one
+                String userId = AWSMobileClient.defaultMobileClient().getIdentityManager().getCachedUserID();
+                UsersDO user = db.GetUserFromUserId(userId);
+
+                if(user == null){
+                    user = new UsersDO();
+                    user.setUserId(userId);
+                }
                 user.setFirstName(objects[0].get("first_name").toString());
                 user.setLastName(objects[0].get("last_name").toString());
                 user.setImageUrl(objects[0].getJSONObject("picture").getJSONObject("data").get("url").toString());
                 dynamoDBMapper.save(user);
+
             } catch(JSONException e){
                 Log.w(TAG, "doInBackground: Failed to parse JSON and update DB");
             }
@@ -84,20 +93,22 @@ public class CurrentUserManager {
         protected Void doInBackground(Void... objects) {
             // Fetch the default configured DynamoDB ObjectMapper
             final DynamoDBMapper dynamoDBMapper = AWSMobileClient.defaultMobileClient().getDynamoDBMapper();
-            final UsersDO user = new UsersDO();
-            user.setUserId(AWSMobileClient.defaultMobileClient().getIdentityManager().getCachedUserID());
+            final DynamoDB db = new DynamoDB();
             try {
                 IdentityManager idm = AWSMobileClient.defaultMobileClient().getIdentityManager();
                 idm.getCurrentIdentityProvider().reloadUserInfo();
+
+                // Check to see if user exists, if so, update that entry, otherwise create a new one
+                String userId = AWSMobileClient.defaultMobileClient().getIdentityManager().getCachedUserID();
+                UsersDO user = db.GetUserFromUserId(userId);
+                if(user == null){
+                    user = new UsersDO();
+                    user.setUserId(userId);
+                }
                 String fullName = idm.getCurrentIdentityProvider().getUserName();
-                String firstName = fullName.substring(0, fullName.indexOf(" "));
-                String lastName = fullName.substring(fullName.indexOf(" "));
-                String imageUrl = idm.getCurrentIdentityProvider().getUserImageUrl();
-
-                user.setFirstName(firstName);
-                user.setLastName(lastName);
-                user.setImageUrl(imageUrl);
-
+                user.setFirstName(fullName.substring(0, fullName.indexOf(" ")));
+                user.setLastName(fullName.substring(fullName.indexOf(" ")+1));
+                user.setImageUrl(idm.getCurrentIdentityProvider().getUserImageUrl());
                 dynamoDBMapper.save(user);
             } catch(Exception e){
                 Log.w(TAG, "doInBackground: Handled exception:"+e);

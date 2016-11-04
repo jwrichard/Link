@@ -1,12 +1,13 @@
 package ca.justinrichard.link;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -16,8 +17,15 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.PopupMenu;
+import android.widget.TabHost;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.amazonaws.mobile.AWSMobileClient;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
+import com.amazonaws.models.nosql.LinksDO;
+import com.amazonaws.models.nosql.ParticipantsDO;
+import com.amazonaws.models.nosql.UsersDO;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -31,6 +39,8 @@ import ca.justinrichard.link.adapters.ContactAdapter;
 import ca.justinrichard.link.models.Contact;
 
 import static com.facebook.FacebookSdk.getApplicationContext;
+
+import java.util.UUID;
 
 
 /**
@@ -101,22 +111,23 @@ public class ContactFragment extends Fragment {
         // Handle list item clicks
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+            public void onItemClick(AdapterView<?> adapterView, final View view, int i, long l) {
                 Log.i(TAG, "List item clicked at position "+i+" with id "+l);
                 Contact c = (Contact)listView.getItemAtPosition(i);
                 Log.i(TAG, c.toString());
 
-                PopupMenu popup = new PopupMenu(getActivity(), view);
+                final PopupMenu popup = new PopupMenu(getActivity(), view);
                 MenuInflater inflater = popup.getMenuInflater();
                 inflater.inflate(R.menu.menu_contact, popup.getMenu());
                 popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
                     @Override
                     public boolean onMenuItemClick(MenuItem item) {
-                        if(item.getTitle() == "Link up"){
+                        Log.i(TAG, "Clicked menu item "+item.getOrder());
+                        if(item.getOrder() == 100){
                             // Call function to handle a request to link up - use existing session if one, otherwise create one
-                            createLinkSsession(); // TODO
-
-                        } else if(item.getTitle() == "Remove contact"){
+                            TextView userIdTextView = (TextView) view.findViewById(R.id.contactUsername);
+                            new createLinkSession(userIdTextView.getText().toString()).execute();
+                        } else if(item.getOrder() == 200){
                             Toast.makeText(getApplicationContext(), "Feature not yet available", Toast.LENGTH_SHORT).show();
                         }
                         return true;
@@ -176,6 +187,77 @@ public class ContactFragment extends Fragment {
     public void onDetach() {
         super.onDetach();
         mListener = null;
+    }
+
+    /*
+     * Used to either find and go to a link session with a user if one already exists, or make on if it doesn't
+     */
+    public class createLinkSession extends AsyncTask<Void, Void, Boolean> {
+        private String username;
+        DynamoDB db = new DynamoDB();
+
+        createLinkSession(String username) {
+            this.username = username;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            final DynamoDBMapper dynamoDBMapper = AWSMobileClient.defaultMobileClient().getDynamoDBMapper();
+            UsersDO me = db.GetUserFromUserId(AWSMobileClient.defaultMobileClient().getIdentityManager().getCachedUserID());
+            UsersDO you = db.GetUserFromUsername(username);
+
+            // First check if we already have an active session with that user, if so, just go to it and let the user know
+
+
+
+            // If not, make one!
+            LinksDO link = new LinksDO();
+            link.setLastUpdate(0.0);
+            link.setActive(0.0);
+            link.setGroupAlias("");
+            link.setGroupImageUrl("");
+            // Generate a random unique identifier
+            String linkId = UUID.randomUUID().toString();
+            link.setId(linkId);
+
+            ParticipantsDO pMe = new ParticipantsDO();
+            pMe.setUserId(me.getUserId());
+            pMe.setLastUpdate(0.0);
+            pMe.setLat(0.0);
+            pMe.setLong(0.0);
+            pMe.setAltitude(0.0);
+            pMe.setLinkId(linkId);
+
+            ParticipantsDO pYou = new ParticipantsDO();
+            pYou.setUserId(you.getUserId());
+            pYou.setLastUpdate(0.0);
+            pYou.setLat(0.0);
+            pYou.setLong(0.0);
+            pYou.setAltitude(0.0);
+            pYou.setLinkId(linkId);
+
+            try {
+                dynamoDBMapper.save(link);
+                dynamoDBMapper.save(pMe);
+                dynamoDBMapper.save(pYou);
+                return true;
+            } catch (Exception e){
+                Log.i(TAG, "Caught exception: "+e);
+                return false;
+            }
+
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean success) {
+            if (success){
+                Toast.makeText(getApplicationContext(), "Successfully created Link!", Toast.LENGTH_SHORT).show();
+                TabHost host = (TabHost) getActivity().findViewById(android.R.id.tabhost);
+                host.setCurrentTab(1);
+            } else {
+                Toast.makeText(getApplicationContext(), "An unexpected error occurred", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 
     /**

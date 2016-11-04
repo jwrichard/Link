@@ -36,12 +36,12 @@ public class ContactAdapter extends ArrayAdapter<Contact> {
 
         // Lookup view for data population
         TextView tv = (TextView) convertView.findViewById(R.id.contactFullName);
-        TextView tv2 = (TextView) convertView.findViewById(R.id.contactUserId);
+        TextView tv2 = (TextView) convertView.findViewById(R.id.contactUsername);
         ImageView iv = (ImageView) convertView.findViewById(R.id.contactImageUrl);
 
         // Populate the data into the template view using the data object
         tv.setText(contact.getFullName());
-        tv2.setText(contact.getUserId());
+        tv2.setText(contact.getUsername());
 
         // Get singleton instance of image loader and use it to load and set the image for the contact
         ImageLoader imageLoader = ImageLoader.getInstance();

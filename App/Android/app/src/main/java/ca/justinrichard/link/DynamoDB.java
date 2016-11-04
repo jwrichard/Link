@@ -31,5 +31,16 @@ public class DynamoDB {
         return null;
     }
 
+    public UsersDO GetUserFromUsername(String username){
+        UsersDO result = new UsersDO();
+        result.setUsername(username);
+        DynamoDBQueryExpression<UsersDO> query = new DynamoDBQueryExpression<UsersDO>().withHashKeyValues(result).withConsistentRead(false);
+        PaginatedQueryList<UsersDO> pql = dynamoDBMapper.query(UsersDO.class, query);
+        if(!pql.isEmpty()){
+            return pql.get(0);
+        }
+        return null;
+    }
+
 
 }

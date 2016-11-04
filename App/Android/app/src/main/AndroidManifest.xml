@@ -8,6 +8,8 @@
     <uses-permission android:name="android.permission.GET_ACCOUNTS" />
     <uses-permission android:name="android.permission.USE_CREDENTIALS" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_PROFILE" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
 
     <application
         android:name=".Application"
@@ -34,7 +36,6 @@
             android:name="com.facebook.FacebookActivity"
             android:configChanges="keyboard|keyboardHidden|screenLayout|screenSize|orientation"
             android:label="@string/app_name" />
-
         <activity
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
@@ -43,6 +44,9 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="ca.justinrichard.link.SignInActivity" />
         </activity>
+        <activity
+            android:name=".UsernamePickerActivity"
+            android:label="@string/title_activity_username_picker" />
     </application>
 
 </manifest>
