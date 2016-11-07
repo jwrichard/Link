@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
@@ -252,8 +253,9 @@ public class ContactFragment extends Fragment {
         protected void onPostExecute(final Boolean success) {
             if (success){
                 Toast.makeText(getApplicationContext(), "Successfully created Link!", Toast.LENGTH_SHORT).show();
-                TabHost host = (TabHost) getActivity().findViewById(android.R.id.tabhost);
-                host.setCurrentTab(1);
+                TabLayout tabLayout = (TabLayout) getActivity().findViewById(R.id.tabs);
+                TabLayout.Tab tab = tabLayout.getTabAt(1);
+                tab.select();
             } else {
                 Toast.makeText(getApplicationContext(), "An unexpected error occurred", Toast.LENGTH_SHORT).show();
             }

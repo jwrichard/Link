@@ -26,7 +26,7 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.amazonaws.models.nosql.ContactsDO;
-import com.amazonaws.models.nosql.LinksDO;
+
 import com.amazonaws.models.nosql.UsersDO;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -34,18 +34,14 @@ import com.google.gson.reflect.TypeToken;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 
 import ca.justinrichard.link.models.Contact;
 
-import static android.R.attr.fragment;
 
-public class MainActivity extends AppCompatActivity implements ContactFragment.OnFragmentInteractionListener {
+public class MainActivity extends AppCompatActivity implements ContactFragment.OnFragmentInteractionListener, LinkFragment.OnFragmentInteractionListener {
 
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -83,9 +79,6 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        // Start separate thread which will update conversation lists since its first tab open
-        new GetConversationList().execute();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -214,42 +207,6 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
     }
 
     /**
-     * Async task to update the list of conversations
-     */
-    private class GetConversationList extends AsyncTask<Void, Void, Boolean> {
-        protected Boolean doInBackground(Void... nothings) {
-            // Get last timestamp we updated from preferences so we can request a delta
-            SharedPreferences settings = getPreferences(MODE_PRIVATE);
-            long lastUpdate = settings.getLong("lastLinksUpdate", 0);
-
-            // Get conversation changes since last update
-            // SQL Eq - Select * from links where lastUpdate > this.lastUpdate
-            final DynamoDBMapper dynamoDBMapper = AWSMobileClient.defaultMobileClient().getDynamoDBMapper();
-            LinksDO linkToFind = new LinksDO();
-
-            // Update
-            String string = "tester";
-            try {
-                FileOutputStream fos = openFileOutput("linksData", Context.MODE_APPEND);
-                fos.write(string.getBytes());
-                fos.close();
-            } catch(IOException e){
-                Log.e(TAG, "doInBackground: IO Exception:" + e);
-                return false;
-            }
-
-            // Update preferences to set last update to now
-            SharedPreferences.Editor editor = settings.edit();
-            Date d = new Date();
-            editor.putLong("lastLinksUpdate", d.getTime());
-            editor.commit();
-            return true;
-        }
-        protected void onPostExecute(Boolean success) {
-            // Tell the UI to update the list of links based on the updated data store
-        }
-    }
-    /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
      */
@@ -263,11 +220,11 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
             switch(position){
-                case 1: Fragment f = ContactFragment.newInstance();
+                case 0: Fragment f = ContactFragment.newInstance();
                         new GetContactsList().execute();
                         return f;
+                case 1: return LinkFragment.newInstance();
                 case 2: return ContactFragment.newInstance();
-                case 3: return ContactFragment.newInstance();
                 default: return ContactFragment.newInstance();
             }
         }

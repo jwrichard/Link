@@ -4,7 +4,10 @@ import com.amazonaws.mobile.AWSMobileClient;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
+import com.amazonaws.models.nosql.LinksDO;
+import com.amazonaws.models.nosql.ParticipantsDO;
 import com.amazonaws.models.nosql.UsersDO;
+import com.google.android.gms.games.multiplayer.Participant;
 
 /**
  * Created by Justin on 9/29/2016.
@@ -36,6 +39,25 @@ public class DynamoDB {
         result.setUsername(username);
         DynamoDBQueryExpression<UsersDO> query = new DynamoDBQueryExpression<UsersDO>().withHashKeyValues(result).withConsistentRead(false);
         PaginatedQueryList<UsersDO> pql = dynamoDBMapper.query(UsersDO.class, query);
+        if(!pql.isEmpty()){
+            return pql.get(0);
+        }
+        return null;
+    }
+
+    public PaginatedQueryList<ParticipantsDO> GetParticipantsForUser(String userId){
+        ParticipantsDO result = new ParticipantsDO();
+        result.setUserId(userId);
+        DynamoDBQueryExpression<ParticipantsDO> query = new DynamoDBQueryExpression<ParticipantsDO>().withHashKeyValues(result).withConsistentRead(false);
+        PaginatedQueryList<ParticipantsDO> pql = dynamoDBMapper.query(ParticipantsDO.class, query);
+        return pql;
+    }
+
+    public LinksDO GetLinkFromId(String linkId){
+        LinksDO result = new LinksDO();
+        result.setId(linkId);
+        DynamoDBQueryExpression<LinksDO> query = new DynamoDBQueryExpression<LinksDO>().withHashKeyValues(result).withConsistentRead(false);
+        PaginatedQueryList<LinksDO> pql = dynamoDBMapper.query(LinksDO.class, query);
         if(!pql.isEmpty()){
             return pql.get(0);
         }
