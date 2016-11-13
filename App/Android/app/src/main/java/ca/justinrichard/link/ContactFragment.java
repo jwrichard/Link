@@ -24,6 +24,8 @@ import android.widget.Toast;
 
 import com.amazonaws.mobile.AWSMobileClient;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
+import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
+import com.amazonaws.models.nosql.ContactsDO;
 import com.amazonaws.models.nosql.LinksDO;
 import com.amazonaws.models.nosql.ParticipantsDO;
 import com.amazonaws.models.nosql.UsersDO;
@@ -38,6 +40,7 @@ import java.util.Iterator;
 
 import ca.justinrichard.link.adapters.ContactAdapter;
 import ca.justinrichard.link.models.Contact;
+import ca.justinrichard.link.models.Link;
 
 import static com.facebook.FacebookSdk.getApplicationContext;
 
@@ -144,34 +147,9 @@ public class ContactFragment extends Fragment {
         return view;
     }
 
-    // Dynamically add new list item
+    // Called from pull to refresh as well as on create to get list of contacts from db
     public void refreshContent(){
-        // Empty all items
-        listContacts.clear();
-
-        // Add items from stored data
-        SharedPreferences sharedPref = getActivity().getPreferences(Context.MODE_PRIVATE);
-        String contactString = sharedPref.getString("contacts", "");
-
-        // Turn contacts JSON to ArrayList of contact objects
-        Gson gson = new GsonBuilder().create();
-        Type listType = new TypeToken<ArrayList<Contact>>() {}.getType();
-        ArrayList<Contact> contacts;
-        try {
-            contacts = gson.fromJson(contactString, listType);
-            // Loop through ArrayList of objects and add to the adapter
-            Iterator<Contact> contactIterator = contacts.iterator();
-            while(contactIterator.hasNext()){
-                Contact c = contactIterator.next();
-                listContacts.add(c);
-            }
-        } catch(com.google.gson.JsonSyntaxException ex){
-            Log.e("ContactFragment", "Failed to read JSON from shared prefs");
-        }
-
-        // Tell adapter to update the list
-        adapter.notifyDataSetChanged();
-        mSwipeRefreshLayout.setRefreshing(false);
+        new getContactsAsync().execute();
     }
 
     @Override
@@ -191,6 +169,58 @@ public class ContactFragment extends Fragment {
     }
 
     /*
+     * Used to get list of contacts and update list async
+     */
+    public class getContactsAsync extends AsyncTask<Void, Void, ArrayList<Contact>> {
+        DynamoDB db = new DynamoDB();
+        String userId = AWSMobileClient.defaultMobileClient().getIdentityManager().getCachedUserID();
+
+        @Override
+        protected ArrayList<Contact> doInBackground(Void... params) {
+            // Get a list of participant objects for current user, and get the associated Link object
+            PaginatedQueryList<ContactsDO> pql = db.GetContactsForUser(userId);
+
+            // Create an array of links to store results and pass on
+            ArrayList<Contact> contacts = new ArrayList<>();
+
+            // Loop through participant objects and get links
+            int results = pql.size();
+            Log.i(TAG, "Iterating through contact objects of count: "+results);
+            for(int i=0; i < results; i++){
+                ContactsDO item = pql.get(i);
+                UsersDO contactUser = db.GetUserFromUserId(item.getContactUserId());
+                Contact c = new Contact(contactUser.getImageUrl(), contactUser.getFirstName()+' '+contactUser.getLastName(), contactUser.getUsername());
+                if(c != null){
+                    contacts.add(c);
+                    Log.i(TAG, "Valid link found, adding to list");
+                } else {
+                    Log.i(TAG, "Invalid link found, skipping");
+                }
+            }
+            return contacts;
+        }
+
+        @Override
+        protected void onPostExecute(final ArrayList<Contact> contacts) {
+            // Empty all items
+            listContacts.clear();
+
+            // Get iterator and loop through and add links to listView
+            Iterator<Contact> contactIterator = contacts.iterator();
+            while(contactIterator.hasNext()){
+                Contact item = contactIterator.next();
+                listContacts.add(item);
+            }
+
+            // Tell adapter to update the list
+            adapter.notifyDataSetChanged();
+            mSwipeRefreshLayout.setRefreshing(false);
+            Toast.makeText(getApplicationContext(), "Successfully refreshed contacts!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
+    /*
      * Used to either find and go to a link session with a user if one already exists, or make on if it doesn't
      */
     public class createLinkSession extends AsyncTask<Void, Void, Boolean> {
@@ -208,7 +238,7 @@ public class ContactFragment extends Fragment {
             UsersDO you = db.GetUserFromUsername(username);
 
             // First check if we already have an active session with that user, if so, just go to it and let the user know
-
+            // TODO
 
 
             // If not, make one!

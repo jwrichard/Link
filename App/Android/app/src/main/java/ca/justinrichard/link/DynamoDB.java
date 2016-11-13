@@ -4,6 +4,7 @@ import com.amazonaws.mobile.AWSMobileClient;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
+import com.amazonaws.models.nosql.ContactsDO;
 import com.amazonaws.models.nosql.LinksDO;
 import com.amazonaws.models.nosql.ParticipantsDO;
 import com.amazonaws.models.nosql.UsersDO;
@@ -62,6 +63,14 @@ public class DynamoDB {
             return pql.get(0);
         }
         return null;
+    }
+
+    public PaginatedQueryList<ContactsDO> GetContactsForUser(String userId){
+        ContactsDO result = new ContactsDO();
+        result.setUserId(userId);
+        DynamoDBQueryExpression<ContactsDO> query = new DynamoDBQueryExpression<ContactsDO>().withHashKeyValues(result).withConsistentRead(false);
+        PaginatedQueryList<ContactsDO> pql = dynamoDBMapper.query(ContactsDO.class, query);
+        return pql;
     }
 
 

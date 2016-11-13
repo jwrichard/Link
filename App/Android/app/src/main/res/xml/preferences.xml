@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="Personal">
+
+        <EditTextPreference
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="Username"
+            android:key="username_preference"
+            android:summary="People can add you as a contact by this name" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="Data usage">
+
+        <ca.justinrichard.link.components.SeekBarPreference
+            android:key="duration"
+            android:title="Duration of something"
+            android:summary="How long something will last"
+            android:dialogMessage="Something duration"
+            android:defaultValue="5"
+            android:text=" seconds"
+            android:max="60" />
+    </PreferenceCategory>
+</PreferenceScreen>

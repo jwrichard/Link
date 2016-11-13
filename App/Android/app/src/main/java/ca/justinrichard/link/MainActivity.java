@@ -224,7 +224,7 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
                         new GetContactsList().execute();
                         return f;
                 case 1: return LinkFragment.newInstance();
-                case 2: return ContactFragment.newInstance();
+                case 2: return SettingsFragment.newInstance();
                 default: return ContactFragment.newInstance();
             }
         }
