@@ -1,5 +1,6 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:background="@drawable/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center_horizontal"
@@ -11,14 +12,6 @@
     tools:context="ca.justinrichard.link.UsernamePickerActivity">
 
     <!-- Login progress -->
-    <ProgressBar
-        android:id="@+id/username_progress"
-        style="?android:attr/progressBarStyleLarge"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
-        android:visibility="gone" />
-
     <ScrollView
         android:id="@+id/username_form"
         android:layout_width="match_parent"
@@ -30,23 +23,54 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
+            <TextView
+                android:text="Choose a username"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/title"
+                tools:text="Choose a username"
+                android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+                android:textSize="24sp"
+                android:textColor="@color/cardview_light_background" />
+
+            <TextView
+                android:text="People can add you as a contact through this username. This is changeable at any time."
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:id="@+id/info"
+                android:textAppearance="@style/TextAppearance.AppCompat.Body1"
+                android:textSize="14sp"
+                android:textColor="@color/cardview_light_background"
+                android:layout_marginTop="10dp"/>
+
             <EditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPersonName"
                 android:hint="Username"
                 android:ems="10"
-                android:id="@+id/editUsername" />
+                android:id="@+id/editUsername"
+                android:maxLines="1"
+                android:layout_marginTop="30dp"/>
 
             <Button
                 android:id="@+id/username_submit_button"
-                style="?android:textAppearanceSmall"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:text="Next"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                style="@android:style/Widget.Holo.Button" />
 
         </LinearLayout>
     </ScrollView>
+
+    <ProgressBar
+        android:id="@+id/username_progress"
+        style="?android:attr/progressBarStyleLarge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone" />
+
 </LinearLayout>

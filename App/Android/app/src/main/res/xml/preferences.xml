@@ -13,12 +13,21 @@
     <PreferenceCategory android:title="Data usage">
 
         <ca.justinrichard.link.components.SeekBarPreference
-            android:key="duration"
-            android:title="Duration of something"
-            android:summary="How long something will last"
-            android:dialogMessage="Something duration"
-            android:defaultValue="5"
+            android:key="data_link_refresh_rate"
+            android:title="Link update rate"
+            android:summary="How often will you send and receive updates in a Link session"
+            android:dialogMessage="Refresh rate"
+            android:defaultValue="30"
             android:text=" seconds"
             android:max="60" />
+
+        <ca.justinrichard.link.components.SeekBarPreference
+            android:key="data_link_refresh_rate_sleep"
+            android:title="Sleep update rate"
+            android:summary="How often will you send and receive updates while phone screen is off"
+            android:dialogMessage="Refresh rate"
+            android:defaultValue="60"
+            android:text=" seconds"
+            android:max="600" />
     </PreferenceCategory>
 </PreferenceScreen>

@@ -40,7 +40,7 @@ public class SeekBarPreference extends DialogPreference implements SeekBar.OnSee
         LinearLayout.LayoutParams params;
         LinearLayout layout = new LinearLayout(mContext);
         layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(6,6,6,6);
+        layout.setPadding(2,2,2,2);
 
         mSplashText = new TextView(mContext);
         if (mDialogMessage != null)
@@ -49,18 +49,15 @@ public class SeekBarPreference extends DialogPreference implements SeekBar.OnSee
 
         mValueText = new TextView(mContext);
         mValueText.setGravity(Gravity.CENTER_HORIZONTAL);
-        mValueText.setTextSize(32);
-        params = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.FILL_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
+        mValueText.setTextSize(24);
+        params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         layout.addView(mValueText, params);
 
         mSeekBar = new SeekBar(mContext);
         mSeekBar.setOnSeekBarChangeListener(this);
         layout.addView(mSeekBar, new LinearLayout.LayoutParams(LinearLayout.LayoutParams.FILL_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
-        if (shouldPersist())
-            mValue = getPersistedInt(mDefault);
+        if (shouldPersist()) mValue = getPersistedInt(mDefault);
 
         mSeekBar.setMax(mMax);
         mSeekBar.setProgress(mValue);
