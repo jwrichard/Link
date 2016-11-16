@@ -2,7 +2,10 @@ package ca.justinrichard.link.models;
 
 import com.amazonaws.models.nosql.ParticipantsDO;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * Created by Justin on 11/1/2016.
@@ -31,8 +34,14 @@ public class Link {
     public String getGroupImage(){
         return this.groupImage;
     }
-    public Double getLastUpdate(){
-        return this.lastUpdate;
+    public String getLastUpdate(){
+        if(this.lastUpdate == 0.0){
+            return "New session";
+        } else {
+            Date date = new Date(this.lastUpdate.longValue());
+            DateFormat df = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+            return df.format(date);
+        }
     }
 
     public void setLinkId(String linkId){

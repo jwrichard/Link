@@ -134,6 +134,7 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            mViewPager.setCurrentItem(1, false);
             return true;
         }
 
@@ -144,66 +145,6 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    /**
-     * Async task to update the list of contacts
-     */
-    private class GetContactsList extends AsyncTask<Void, Void, ArrayList<Contact>> {
-        protected ArrayList<Contact> doInBackground(Void... nothings) {
-            // Get my UserId
-            String myUserId = AWSMobileClient.defaultMobileClient().getIdentityManager().getCachedUserID();
-            Log.i(TAG, "Found userId: "+myUserId);
-
-            // Get all of my contacts
-            try {
-                // Create db mapper and build object to reference in query
-                final DynamoDBMapper dynamoDBMapper = AWSMobileClient.defaultMobileClient().getDynamoDBMapper();
-                ContactsDO withThisContact = new ContactsDO();
-                withThisContact.setUserId(myUserId);
-
-                // Create and run query to get contacts for current user
-                DynamoDBQueryExpression<ContactsDO> query = new DynamoDBQueryExpression<ContactsDO>().withHashKeyValues(withThisContact).withConsistentRead(false);
-                PaginatedQueryList<ContactsDO> contacts = dynamoDBMapper.query(ContactsDO.class, query);
-
-                // Create an array of contact objects from the db result
-                DynamoDB db = new DynamoDB();
-                ArrayList<Contact> contactsArray = new ArrayList<>();
-                Iterator<ContactsDO> contactIterator = contacts.iterator();
-                while(contactIterator.hasNext()){
-                    ContactsDO element = contactIterator.next();
-                    UsersDO user = db.GetUserFromUserId(element.getContactUserId());
-                    Contact c = new Contact(user.getImageUrl(), user.getFirstName()+" "+user.getLastName(), user.getUsername());
-                    if(user != null){
-                        contactsArray.add(c);
-                    }
-                }
-                return contactsArray;
-            } catch(NullPointerException e){
-                Log.e(TAG, "FAILED to get contacts from DB, query failed");
-                return null;
-            }
-        }
-        protected void onPostExecute(ArrayList<Contact> contacts) {
-            // Store list of contacts
-            Log.i(TAG, "Got contacts list: "+TextUtils.join(",", contacts));
-
-            // Turn list of contacts into JSON
-            Gson gson = new GsonBuilder().create();
-            Type listType = new TypeToken<ArrayList<Contact>>() {}.getType();
-            String jsonString = gson.toJson(contacts, listType);
-            Log.i(TAG, "JSON RESULT:"+jsonString);
-
-            // Store JSON result into shared prefs (WIll have some limit, 1.4mb or something? 1/8th of total app mem? Future concern)
-            SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
-            SharedPreferences.Editor editor = sharedPref.edit();
-            editor.putString("contacts", jsonString);
-            editor.commit();
-
-            // Tell the fragment to update its list
-            ContactFragment fragment = (ContactFragment) mFragmentManager.findFragmentById(R.id.swiperefreshcontacts);
-            if(fragment != null) fragment.refreshContent();
-        }
     }
 
     /**
@@ -220,9 +161,7 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
             switch(position){
-                case 0: Fragment f = ContactFragment.newInstance();
-                        new GetContactsList().execute();
-                        return f;
+                case 0: return ContactFragment.newInstance();
                 case 1: return LinkFragment.newInstance();
                 case 2: return SettingsFragment.newInstance();
                 default: return ContactFragment.newInstance();

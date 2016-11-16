@@ -1,5 +1,7 @@
 package ca.justinrichard.link;
 
+import android.util.Log;
+
 import com.amazonaws.mobile.AWSMobileClient;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
@@ -63,6 +65,29 @@ public class DynamoDB {
             return pql.get(0);
         }
         return null;
+    }
+
+    public String GetLinkTitle(String linkId, String myUserId){
+        // Result string
+        String s = "";
+
+        // Get list of participants for that LinkId
+        ParticipantsDO result = new ParticipantsDO();
+        result.setLinkId(linkId);
+        DynamoDBQueryExpression<ParticipantsDO> query = new DynamoDBQueryExpression<ParticipantsDO>().withHashKeyValues(result).withConsistentRead(false);
+        PaginatedQueryList<ParticipantsDO> pql = dynamoDBMapper.query(ParticipantsDO.class, query);
+        int numResults = pql.size();
+        boolean first = true;
+        for(int i=0; i<numResults; i++){
+            ParticipantsDO item = pql.get(i);
+            if(!item.getUserId().equals(myUserId)){
+                UsersDO user = this.GetUserFromUserId(item.getUserId());
+                if(!first) s+= ", ";
+                s += user.getFirstName();
+                first = false;
+            }
+        }
+        return s;
     }
 
     public PaginatedQueryList<ContactsDO> GetContactsForUser(String userId){
