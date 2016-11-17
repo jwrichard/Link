@@ -117,5 +117,19 @@ public class DynamoDB {
         return pql;
     }
 
+    // Adds a contact, returns boolean of if successful
+    public boolean AddContact(String theirUsername, String myUserId){
+        UsersDO user = GetUserFromUsername(theirUsername);
+        if(user != null){
+            ContactsDO contact = new ContactsDO();
+            contact.setUserId(myUserId);
+            contact.setContactUserId(user.getUserId());
+            dynamoDBMapper.save(contact);
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 
 }
