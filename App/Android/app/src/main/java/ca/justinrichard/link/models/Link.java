@@ -43,6 +43,9 @@ public class Link {
             return df.format(date);
         }
     }
+    public Long getLastUpdateNum(){
+        return this.lastUpdate.longValue();
+    }
 
     public void setLinkId(String linkId){
         this.linkId = linkId;

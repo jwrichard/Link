@@ -6,10 +6,12 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -45,6 +47,10 @@ public class UsernamePickerActivity extends Activity {
 
         // Set up the form
         mUsernameView = (EditText) findViewById(R.id.editUsername);
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+        mUsernameView.append(settings.getString("myUsername", ""));
+        Log.i("UsernamePicker", "Setting text field text to: "+settings.getString("myUsername", ""));
+
         mSubmitButton = (Button) findViewById(R.id.username_submit_button);
         mSubmitButton.setOnClickListener(new OnClickListener() {
             @Override
@@ -81,7 +87,7 @@ public class UsernamePickerActivity extends Activity {
             focusView = mUsernameView;
             cancel = true;
         } else if (!isUsernameValid(username)) {
-            mUsernameView.setError(getString(R.string.error_invalid_email));
+            mUsernameView.setError("Username must be 3-20 characters long");
             focusView = mUsernameView;
             cancel = true;
         }
@@ -104,7 +110,7 @@ public class UsernamePickerActivity extends Activity {
      * Makes sure a username is valid, currently only checks length
      */
     private boolean isUsernameValid(String username) {
-        return username.length() > 2 && username.length() < 20;
+        return username.length() > 2 && username.length() < 21;
     }
 
     /**
@@ -173,9 +179,15 @@ public class UsernamePickerActivity extends Activity {
                 Log.i(TAG, "For self "+mUserId+" found user: "+user);
                 user.setUsername(mUsername);
                 dynamoDBMapper.save(user);
+
+                // Save username to local prefs to access later
+                SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+                SharedPreferences.Editor editor = settings.edit();
+                editor.putString("myUsername", mUsername);
+                editor.commit();
                 return true;
             } else {
-                if(user.getUserId() == mUserId){
+                if(user.getUserId().equals(mUserId)){
                     // It is me!
                     return true;
                 } else {

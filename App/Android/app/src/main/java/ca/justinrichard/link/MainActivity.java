@@ -20,6 +20,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Toast;
 
 import com.amazonaws.mobile.AWSMobileClient;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
@@ -39,6 +40,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 
 import ca.justinrichard.link.models.Contact;
+
+import static com.facebook.FacebookSdk.getApplicationContext;
 
 
 public class MainActivity extends AppCompatActivity implements ContactFragment.OnFragmentInteractionListener, LinkFragment.OnFragmentInteractionListener, SettingsFragment.OnFragmentInteractionListener {
@@ -73,6 +76,16 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
     public void onFragmentInteraction(String s){
         // Do something
         return;
+    }
+
+    // Called from ContactFragment when a new Link session is created to update the links fragment
+    public void onContactFragmentNewLinkCreated(){
+        LinkFragment fragment = (LinkFragment) getSupportFragmentManager().findFragmentById(R.id.swiperefreshlinks);
+        if(fragment != null) {
+            fragment.refreshContent();
+        } else {
+            Toast.makeText(getApplicationContext(), "Unable to automatically refresh Links", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override

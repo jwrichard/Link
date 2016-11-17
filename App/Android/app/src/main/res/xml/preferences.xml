@@ -2,13 +2,11 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory android:title="Personal">
-
-        <EditTextPreference
-            android:selectAllOnFocus="true"
-            android:singleLine="true"
-            android:title="Username"
-            android:key="username_preference"
-            android:summary="People can add you as a contact by this name" />
+        <Preference android:title="Username"
+                    android:key="myUsername"
+                    android:summary="People can add you as a contact by this name.\nCurrent name: ">
+            <intent android:action="ca.justinrichard.link.UsernamePickerActivity" />
+        </Preference>
     </PreferenceCategory>
     <PreferenceCategory android:title="Data usage">
 
@@ -16,18 +14,18 @@
             android:key="data_link_refresh_rate"
             android:title="Link update rate"
             android:summary="How often will you send and receive updates in a Link session"
-            android:dialogMessage="Refresh rate"
+            android:dialogMessage=""
             android:defaultValue="30"
             android:text=" seconds"
-            android:max="60" />
+            android:max="50" />
 
         <ca.justinrichard.link.components.SeekBarPreference
             android:key="data_link_refresh_rate_sleep"
             android:title="Sleep update rate"
             android:summary="How often will you send and receive updates while phone screen is off"
-            android:dialogMessage="Refresh rate"
+            android:dialogMessage=""
             android:defaultValue="60"
             android:text=" seconds"
-            android:max="600" />
+            android:max="590" />
     </PreferenceCategory>
 </PreferenceScreen>

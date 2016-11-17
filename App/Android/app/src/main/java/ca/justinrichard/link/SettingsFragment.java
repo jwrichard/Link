@@ -1,11 +1,15 @@
 package ca.justinrichard.link;
 
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -32,7 +36,6 @@ public class SettingsFragment extends android.support.v4.preference.PreferenceFr
      * this fragment using the provided parameters.
      * @return A new instance of fragment SettingsFragment.
      */
-    // TODO: Rename and change types and number of parameters
     public static SettingsFragment newInstance() {
         SettingsFragment fragment = new SettingsFragment();
         return fragment;
@@ -44,18 +47,13 @@ public class SettingsFragment extends android.support.v4.preference.PreferenceFr
 
         // Load the preferences from an XML resource
         addPreferencesFromResource(R.xml.preferences);
-    }
 
-    /*@Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_settings, container, false);
-    }*/
-
-    // TODO: Rename method, update argument and hook method into UI event
-    public void onButtonPressed(String s) {
-        if (mListener != null) {
-            mListener.onFragmentInteraction(s);
+        // Append current username to username preference
+        Preference p = findPreference("myUsername");
+        if(p != null){
+            SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getContext());
+            Log.i("SettingsFragment", "Attempting to append username of "+settings.getString("myUsername", ""));
+            p.setSummary(p.getSummary()+settings.getString("myUsername", ""));
         }
     }
 
@@ -74,6 +72,7 @@ public class SettingsFragment extends android.support.v4.preference.PreferenceFr
         super.onDetach();
         mListener = null;
     }
+
 
     /**
      * This interface must be implemented by activities that contain this

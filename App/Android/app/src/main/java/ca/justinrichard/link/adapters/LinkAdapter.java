@@ -47,8 +47,14 @@ public class LinkAdapter extends ArrayAdapter<Link> {
 
         // Get singleton instance of image loader and use it to load and set the image for the contact
         ImageLoader imageLoader = ImageLoader.getInstance();
-        //imageLoader.displayImage(link.getGroupImage(), groupImage);
-        //imageLoader.displayImage(link.getGroupImage(), linkActive);
+        if(groupImage != null) imageLoader.displayImage(link.getGroupImage(), groupImage);
+
+        // Add indicator if the link session is active - if update within last 10 minutes
+        if(link.getLastUpdateNum() > System.currentTimeMillis()-600000){
+            linkActive.setImageResource(R.drawable.ic_link_active);
+        } else {
+            linkActive.setImageDrawable(null);
+        }
 
         // Return the completed view to render on screen
         return convertView;

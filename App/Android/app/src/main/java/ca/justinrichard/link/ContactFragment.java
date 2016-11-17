@@ -251,6 +251,7 @@ public class ContactFragment extends Fragment {
             String linkId = UUID.randomUUID().toString();
             link.setId(linkId);
 
+            // Create participant for myself
             ParticipantsDO pMe = new ParticipantsDO();
             pMe.setUserId(me.getUserId());
             pMe.setLastUpdate(0.0);
@@ -259,6 +260,7 @@ public class ContactFragment extends Fragment {
             pMe.setAltitude(0.0);
             pMe.setLinkId(linkId);
 
+            // Create participant for other user
             ParticipantsDO pYou = new ParticipantsDO();
             pYou.setUserId(you.getUserId());
             pYou.setLastUpdate(0.0);
@@ -268,9 +270,13 @@ public class ContactFragment extends Fragment {
             pYou.setLinkId(linkId);
 
             try {
+                // Save all objects
                 dynamoDBMapper.save(link);
                 dynamoDBMapper.save(pMe);
                 dynamoDBMapper.save(pYou);
+
+                // Call a refresh on the link fragment
+                mListener.onContactFragmentNewLinkCreated();
                 return true;
             } catch (Exception e){
                 Log.i(TAG, "Caught exception: "+e);
@@ -304,6 +310,6 @@ public class ContactFragment extends Fragment {
      */
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
-        void onFragmentInteraction(String s);
+        void onContactFragmentNewLinkCreated();
     }
 }

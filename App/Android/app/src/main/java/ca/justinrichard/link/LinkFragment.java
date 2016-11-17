@@ -146,16 +146,15 @@ public class LinkFragment extends Fragment {
         mListener = null;
     }
 
-
     /*
     * Reloads the list of links
     */
-    public class getLinksAsync extends AsyncTask<Void, Void, ArrayList<LinksDO>> {
+    public class getLinksAsync extends AsyncTask<Void, Void, Boolean> {
         DynamoDB db = new DynamoDB();
         String userId = AWSMobileClient.defaultMobileClient().getIdentityManager().getCachedUserID();
 
         @Override
-        protected ArrayList<LinksDO> doInBackground(Void... params) {
+        protected Boolean doInBackground(Void... params) {
 
             // Get a list of participant objects for current user, and get the associated Link object
             PaginatedQueryList<ParticipantsDO> pql = db.GetParticipantsForUser(userId);
@@ -176,11 +175,6 @@ public class LinkFragment extends Fragment {
                     Log.i(TAG, "Invalid link found, skipping");
                 }
             }
-            return links;
-        }
-
-        @Override
-        protected void onPostExecute(final ArrayList<LinksDO> links) {
 
             // Empty all items
             listLinks.clear();
@@ -189,14 +183,25 @@ public class LinkFragment extends Fragment {
             Iterator<LinksDO> linksDOIterator = links.iterator();
             while(linksDOIterator.hasNext()){
                 LinksDO item = linksDOIterator.next();
-                Link itemToAdd = new Link(item.getId(), item.getId(), null, item.getLastUpdate());
+                String groupAlias = (item.getGroupAlias() == null ? db.GetLinkTitle(item.getId(), userId) : item.getGroupAlias());
+                String imageUrl = (item.getGroupImageUrl() == null ? db.GetLinkImageUrl(item.getId(), userId) : item.getGroupImageUrl());
+                Link itemToAdd = new Link(item.getId(), groupAlias, imageUrl, item.getLastUpdate());
                 listLinks.add(itemToAdd);
             }
+            return true;
+        }
 
-            // Tell adapter to update the list
-            adapter.notifyDataSetChanged();
-            mSwipeRefreshLayout.setRefreshing(false);
-            Toast.makeText(getApplicationContext(), "Successfully refreshed Links!", Toast.LENGTH_SHORT).show();
+        @Override
+        protected void onPostExecute(Boolean success) {
+            if(success){
+                // Tell adapter to update the list
+                adapter.notifyDataSetChanged();
+                mSwipeRefreshLayout.setRefreshing(false);
+                Toast.makeText(getApplicationContext(), "Successfully refreshed Links!", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getApplicationContext(), "Failed to update Links", Toast.LENGTH_SHORT).show();
+            }
+
         }
     }
 

@@ -46,7 +46,12 @@
         </activity>
         <activity
             android:name=".UsernamePickerActivity"
-            android:label="@string/title_activity_username_picker" />
+            android:label="@string/title_activity_username_picker">
+            <intent-filter>
+                <action android:name="ca.justinrichard.link.UsernamePickerActivity" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
     </application>
 
 </manifest>
