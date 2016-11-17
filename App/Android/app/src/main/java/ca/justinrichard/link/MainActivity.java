@@ -1,12 +1,9 @@
 package ca.justinrichard.link;
 
-import android.content.Context;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.os.AsyncTask;
 import android.support.design.widget.TabLayout;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
@@ -15,7 +12,6 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -23,25 +19,11 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.amazonaws.mobile.AWSMobileClient;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
-import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
-import com.amazonaws.models.nosql.ContactsDO;
-
-import com.amazonaws.models.nosql.UsersDO;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
+import com.github.clans.fab.FloatingActionMenu;
+import com.github.clans.fab.FloatingActionButton;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Iterator;
-
-import ca.justinrichard.link.models.Contact;
-
-import static com.facebook.FacebookSdk.getApplicationContext;
 
 
 public class MainActivity extends AppCompatActivity implements ContactFragment.OnFragmentInteractionListener, LinkFragment.OnFragmentInteractionListener, SettingsFragment.OnFragmentInteractionListener {
@@ -56,6 +38,9 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
      */
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private FragmentManager mFragmentManager;
+
+    private FloatingActionMenu mMenu;
+    private FloatingActionButton mFab, mSubFab1, mSubFab2;
 
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -107,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
         mViewPager.setOffscreenPageLimit(3);
 
         // Set up tab layout
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
+        final TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
         try {
             tabLayout.getTabAt(0).setIcon(R.drawable.ic_contacts);
@@ -121,7 +106,51 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
         ImageLoaderConfiguration config = new ImageLoaderConfiguration.Builder(this).build();
         ImageLoader.getInstance().init(config);
 
-        // Set up floating action button
+        // Set up floating action button and submenu items
+        mMenu = (FloatingActionMenu) findViewById(R.id.menu);
+        mSubFab1 = (FloatingActionButton) findViewById(R.id.menu_item);
+        mSubFab2 = (FloatingActionButton) findViewById(R.id.menu_item2);
+
+        // New Link
+        mSubFab1.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v){
+                // Open contact tab and tell user to select a contact
+                Toast.makeText(getApplicationContext(), "Select a contact", Toast.LENGTH_LONG).show();
+                tabLayout.getTabAt(0).select();
+                mMenu.close(true);
+            }
+        });
+
+        // New Contact
+        mSubFab2.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v){
+                // Open contact tab
+                Toast.makeText(getApplicationContext(), "Beep beep", Toast.LENGTH_SHORT).show();
+                tabLayout.getTabAt(0).select();
+                mMenu.close(true);
+
+                // Initiate new contact prompt
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(getBaseContext());
+                builder.setView(getLayoutInflater().inflate(R.layout.contact_prompt, null));
+                builder.setMessage("Enter a username to add as a contact").setTitle("Add a contact");
+                builder.setPositiveButton("Submit", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        // User clicked OK button
+                    }
+                });
+                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        // User cancelled the dialog
+                    }
+                });
+
+                AlertDialog dialog = builder.create();
+                dialog.show();
+            }
+        });
+
+        /*
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -129,6 +158,7 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
                 Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG).setAction("Action", null).show();
             }
         });
+        */
     }
 
     @Override
@@ -147,7 +177,7 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
-            mViewPager.setCurrentItem(1, false);
+            mViewPager.setCurrentItem(2, false);
             return true;
         }
 

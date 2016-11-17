@@ -2,13 +2,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="ca.justinrichard.link.MainActivity">
-    <item android:id="@+id/search"
-        android:title="Search"
-        android:icon="@drawable/ic_search"
-        android:showAsAction="always|collapseActionView"
-        android:actionViewClass="android.widget.SearchView"
-        android:visible="true"
-        android:enabled="true" />
     <item
         android:id="@+id/action_settings"
         android:orderInCategory="100"

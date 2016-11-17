@@ -81,8 +81,7 @@ public class SeekBarPreference extends DialogPreference implements SeekBar.OnSee
 
     public void onProgressChanged(SeekBar seek, int value, boolean fromTouch)
     {
-        value += 10;
-        String t = String.valueOf(value);
+        String t = String.valueOf(value+10);
         mValueText.setText(mSuffix == null ? t : t.concat(mSuffix));
         if (shouldPersist())
             persistInt(value);
