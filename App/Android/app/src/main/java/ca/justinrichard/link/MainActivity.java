@@ -3,6 +3,7 @@ package ca.justinrichard.link;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.AsyncTask;
 import android.support.design.widget.TabLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -16,6 +17,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.amazonaws.mobile.AWSMobileClient;
@@ -24,6 +26,9 @@ import com.github.clans.fab.FloatingActionButton;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 
+import ca.justinrichard.link.models.Contact;
+
+import static com.facebook.FacebookSdk.getApplicationContext;
 
 
 public class MainActivity extends AppCompatActivity implements ContactFragment.OnFragmentInteractionListener, LinkFragment.OnFragmentInteractionListener, SettingsFragment.OnFragmentInteractionListener {
@@ -41,6 +46,9 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
 
     private FloatingActionMenu mMenu;
     private FloatingActionButton mFab, mSubFab1, mSubFab2;
+
+    // New contact dialog
+    private AlertDialog dialog;
 
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -111,6 +119,7 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
         mSubFab1 = (FloatingActionButton) findViewById(R.id.menu_item);
         mSubFab2 = (FloatingActionButton) findViewById(R.id.menu_item2);
 
+        // Create handlers for the Fab submenu actions
         // New Link
         mSubFab1.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v){
@@ -125,18 +134,21 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
         mSubFab2.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v){
                 // Open contact tab
-                Toast.makeText(getApplicationContext(), "Beep beep", Toast.LENGTH_SHORT).show();
                 tabLayout.getTabAt(0).select();
                 mMenu.close(true);
 
                 // Initiate new contact prompt
-
-                AlertDialog.Builder builder = new AlertDialog.Builder(getBaseContext());
-                builder.setView(getLayoutInflater().inflate(R.layout.contact_prompt, null));
+                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                final View view = getLayoutInflater().inflate(R.layout.contact_prompt, null);
+                builder.setView(view);
                 builder.setMessage("Enter a username to add as a contact").setTitle("Add a contact");
                 builder.setPositiveButton("Submit", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        // User clicked OK button
+                        // User clicked OK button - call async task to add contact and reprompt on failure
+                        EditText usernameTextEdit = (EditText) view.findViewById(R.id.username);
+                        // Get instance of contact fragment
+                        ContactFragment fragment = (ContactFragment) mFragmentManager.findFragmentById(R.id.swiperefreshcontacts);
+                        new addContact(usernameTextEdit.getText().toString(), fragment).execute();
                     }
                 });
                 builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
@@ -145,20 +157,44 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
                     }
                 });
 
-                AlertDialog dialog = builder.create();
+                dialog = builder.create();
                 dialog.show();
             }
         });
+    }
 
-        /*
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG).setAction("Action", null).show();
+    // Async task to add a contact and re-prompt on failure
+    public class addContact extends AsyncTask<Void, Void, Boolean> {
+        DynamoDB db = new DynamoDB();
+        String userId = AWSMobileClient.defaultMobileClient().getIdentityManager().getCachedUserID();
+        String username;
+        ContactFragment fragment;
+
+        public addContact(String username, ContactFragment fragment){
+            this.username = username;
+            this.fragment = fragment;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            return db.AddContact(username, userId);
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean success) {
+            if(success){
+                final TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
+                tabLayout.getTabAt(0).select();
+                if(fragment != null){
+                    fragment.refreshContent();
+                }
+                Toast.makeText(getApplicationContext(), "Contact added", Toast.LENGTH_SHORT).show();
+            } else {
+                // Edit the dialog and re-prompt
+                dialog.setMessage("Unable to find user with that username. Please try again.");
+                dialog.show();
             }
-        });
-        */
+        }
     }
 
     @Override

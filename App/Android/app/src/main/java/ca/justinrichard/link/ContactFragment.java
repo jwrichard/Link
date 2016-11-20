@@ -132,7 +132,9 @@ public class ContactFragment extends Fragment {
                             TextView userIdTextView = (TextView) view.findViewById(R.id.contactUsername);
                             new createLinkSession(userIdTextView.getText().toString()).execute();
                         } else if(item.getOrder() == 200){
-                            Toast.makeText(getApplicationContext(), "Feature not yet available", Toast.LENGTH_SHORT).show();
+                            TextView usernameTextView = (TextView) view.findViewById(R.id.contactUsername);
+                            String username = usernameTextView.getText().toString();
+                            new removeContact(username).execute();
                         }
                         return true;
                     }
@@ -294,6 +296,33 @@ public class ContactFragment extends Fragment {
                 tab.select();
             } else {
                 Toast.makeText(getApplicationContext(), "An unexpected error occurred", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    // Async task to remove a contact then call a refresh on the list
+    public class removeContact extends AsyncTask<Void, Void, Boolean> {
+        DynamoDB db = new DynamoDB();
+        String userId = AWSMobileClient.defaultMobileClient().getIdentityManager().getCachedUserID();
+        String username;
+
+        public removeContact(String username){
+            Log.i(TAG, "Attempting to remove contact: "+username);
+            this.username = username;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            return db.RemoveContact(username, userId);
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean success) {
+            if(success){
+                new getContactsAsync().execute();
+                Toast.makeText(getApplicationContext(), "Contact removed", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getApplicationContext(), "Failed to delete contact :(", Toast.LENGTH_SHORT).show();
             }
         }
     }

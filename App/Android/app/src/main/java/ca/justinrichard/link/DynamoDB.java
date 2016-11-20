@@ -1,7 +1,5 @@
 package ca.justinrichard.link;
 
-import android.util.Log;
-
 import com.amazonaws.mobile.AWSMobileClient;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
@@ -10,7 +8,6 @@ import com.amazonaws.models.nosql.ContactsDO;
 import com.amazonaws.models.nosql.LinksDO;
 import com.amazonaws.models.nosql.ParticipantsDO;
 import com.amazonaws.models.nosql.UsersDO;
-import com.google.android.gms.games.multiplayer.Participant;
 
 /**
  * Created by Justin on 9/29/2016.
@@ -131,5 +128,26 @@ public class DynamoDB {
         }
     }
 
+    // Removes a contact
+    public boolean RemoveContact(String theirUsername, String myUserId){
+        UsersDO user = GetUserFromUsername(theirUsername);
+        if(user != null){
+            ContactsDO contact = new ContactsDO();
+            contact.setUserId(myUserId);
+            contact.setContactUserId(user.getUserId());
+            DynamoDBQueryExpression<ContactsDO> query = new DynamoDBQueryExpression<ContactsDO>().withHashKeyValues(contact).withConsistentRead(false);
+            PaginatedQueryList<ContactsDO> pql = dynamoDBMapper.query(ContactsDO.class, query);
+
+            int size = pql.size();
+            for(int i=0; i<size; i++){
+                ContactsDO item = pql.get(i);
+                if(item.getContactUserId().equals(user.getUserId())){
+                    dynamoDBMapper.delete(pql.get(i));
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
 }
