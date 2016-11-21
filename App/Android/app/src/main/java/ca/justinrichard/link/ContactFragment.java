@@ -116,36 +116,35 @@ public class ContactFragment extends Fragment {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, final View view, int i, long l) {
-                Log.i(TAG, "List item clicked at position "+i+" with id "+l);
-                Contact c = (Contact)listView.getItemAtPosition(i);
-                Log.i(TAG, c.toString());
+            Log.i(TAG, "List item clicked at position "+i+" with id "+l);
+            Contact c = (Contact)listView.getItemAtPosition(i);
+            Log.i(TAG, c.toString());
 
-                final PopupMenu popup = new PopupMenu(getActivity(), view);
-                MenuInflater inflater = popup.getMenuInflater();
-                inflater.inflate(R.menu.menu_contact, popup.getMenu());
-                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                    @Override
-                    public boolean onMenuItemClick(MenuItem item) {
-                        Log.i(TAG, "Clicked menu item "+item.getOrder());
-                        if(item.getOrder() == 100){
-                            // Call function to handle a request to link up - use existing session if one, otherwise create one
-                            TextView userIdTextView = (TextView) view.findViewById(R.id.contactUsername);
-                            new createLinkSession(userIdTextView.getText().toString()).execute();
-                        } else if(item.getOrder() == 200){
-                            TextView usernameTextView = (TextView) view.findViewById(R.id.contactUsername);
-                            String username = usernameTextView.getText().toString();
-                            new removeContact(username).execute();
-                        }
-                        return true;
-                    }
-                });
-                popup.show();
+            final PopupMenu popup = new PopupMenu(getActivity(), view);
+            MenuInflater inflater = popup.getMenuInflater();
+            inflater.inflate(R.menu.menu_contact, popup.getMenu());
+            popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                @Override
+                public boolean onMenuItemClick(MenuItem item) {
+                Log.i(TAG, "Clicked menu item "+item.getOrder());
+                if(item.getOrder() == 100){
+                    // Call function to handle a request to link up - use existing session if one, otherwise create one
+                    TextView userIdTextView = (TextView) view.findViewById(R.id.contactUsername);
+                    new createLinkSession(userIdTextView.getText().toString()).execute();
+                } else if(item.getOrder() == 200){
+                    TextView usernameTextView = (TextView) view.findViewById(R.id.contactUsername);
+                    String username = usernameTextView.getText().toString();
+                    new removeContact(username).execute();
+                }
+                return true;
+                }
+            });
+            popup.show();
             }
         });
 
         // Fill out the content
         refreshContent();
-
         return view;
     }
 

@@ -1,6 +1,7 @@
 package ca.justinrichard.link;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.icu.text.MessagePattern;
 import android.os.AsyncTask;
@@ -55,6 +56,7 @@ import static com.facebook.FacebookSdk.getApplicationContext;
 public class LinkFragment extends Fragment {
 
     final String TAG = "ContactFragment";
+    public final static String LINK_ID = "ca.justinrichard.link.MESSAGE";
 
     // Our list of contacts
     ArrayList<Link> listLinks = new ArrayList<>();
@@ -113,8 +115,11 @@ public class LinkFragment extends Fragment {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, final View view, int i, long l) {
-                Log.i(TAG, "List item clicked at position "+i+" with id "+l);
-                Toast.makeText(getApplicationContext(), "Feature not yet available", Toast.LENGTH_SHORT).show();
+            Log.i(TAG, "List item clicked at position "+i+" with id "+l);
+            Link item = (Link)listView.getItemAtPosition(i);
+            Intent intent = new Intent(getActivity(), LinkActivity.class);
+            intent.putExtra(LINK_ID, item.getLinkId());
+            startActivity(intent);
             }
         });
 
