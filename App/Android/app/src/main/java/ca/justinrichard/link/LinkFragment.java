@@ -58,7 +58,7 @@ public class LinkFragment extends Fragment {
     final String TAG = "ContactFragment";
     public final static String LINK_ID = "ca.justinrichard.link.MESSAGE";
 
-    // Our list of contacts
+    // Our list of links
     ArrayList<Link> listLinks = new ArrayList<>();
 
     // List adapter
