@@ -13,9 +13,9 @@ public class Participant {
     public Double altitude;
     public Double latitude;
     public Double longitude;
-    public Long lastUpdate;
+    public Double lastUpdate;
 
-    public Participant(String userId, Long lastUpdate, Double altitude, Double latitude, Double longitude) {
+    public Participant(String userId, Double lastUpdate, Double altitude, Double latitude, Double longitude) {
         this.userId = userId;
         this.altitude = altitude;
         this.latitude = latitude;
@@ -35,7 +35,7 @@ public class Participant {
     public Double getLongitude(){
         return this.longitude;
     }
-    public Long getLastUpdate(){
+    public Double getLastUpdate(){
         return this.lastUpdate;
     }
     public String getDisplayName() { return this.displayName; }

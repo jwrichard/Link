@@ -53,6 +53,14 @@ public class DynamoDB {
         return pql;
     }
 
+    public PaginatedQueryList<ParticipantsDO> GetParticipantsFromLinkId(String linkId){
+        ParticipantsDO result = new ParticipantsDO();
+        result.setLinkId(linkId);
+        DynamoDBQueryExpression<ParticipantsDO> query = new DynamoDBQueryExpression<ParticipantsDO>().withHashKeyValues(result).withConsistentRead(false);
+        PaginatedQueryList<ParticipantsDO> pql = dynamoDBMapper.query(ParticipantsDO.class, query);
+        return pql;
+    }
+
     public LinksDO GetLinkFromId(String linkId){
         LinksDO result = new LinksDO();
         result.setId(linkId);

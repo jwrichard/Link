@@ -191,11 +191,8 @@ public class ContactFragment extends Fragment {
                 ContactsDO item = pql.get(i);
                 UsersDO contactUser = db.GetUserFromUserId(item.getContactUserId());
                 Contact c = new Contact(contactUser.getImageUrl(), contactUser.getFirstName()+' '+contactUser.getLastName(), contactUser.getUsername());
-                if(c != null){
+                if(c != null) {
                     contacts.add(c);
-                    Log.i(TAG, "Valid link found, adding to list");
-                } else {
-                    Log.i(TAG, "Invalid link found, skipping");
                 }
             }
             return contacts;
