@@ -84,15 +84,15 @@
         android:layout_height="wrap_content"
         android:text="Link"
         android:id="@+id/title"
-        android:textSize="80sp"
+        android:textSize="70sp"
         android:textColor="@color/cardview_light_background"
         android:textAllCaps="false"
         android:fontFamily="sans-serif"
         android:layout_below="@+id/intro"
         android:layout_centerHorizontal="true"
         android:shadowColor="#000"
-        android:shadowDx="1"
-        android:shadowDy="1"
+        android:shadowDx="2"
+        android:shadowDy="2"
         android:shadowRadius="10"
          />
 
