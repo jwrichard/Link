@@ -93,12 +93,14 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
         linkId = intent.getStringExtra(LinkFragment.LINK_ID);
         Log.i(TAG, "Viewing Link session with LinkId: " + linkId);
 
+        /*
         // Enabled 'Up' action in the action bar
         try {
             getActionBar().setDisplayHomeAsUpEnabled(true);
         } catch (Exception e) {
             Log.i(TAG, "Failed to set home up as enabled");
         }
+        */
 
         // Get our swipe refresh handler
         mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.swiperefreshlink);
@@ -243,6 +245,7 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
      * Requests location updates from the FusedLocationApi.
      */
     protected void startLocationUpdates() {
+        Log.i(TAG, "Starting location updates");
         try {
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this).setResultCallback(new ResultCallback<Status>() {
                 @Override
@@ -318,6 +321,7 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
         // moves to a new location, and then changes the device orientation, the original location
         // is displayed as the activity is re-created.
         if (mCurrentLocation == null) {
+            Log.i(TAG, "Attempting to get current location");
             try {
                 mCurrentLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
             } catch(SecurityException e){
@@ -335,6 +339,7 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
         mCurrentLocation = location;
         mLastUpdateTime = DateFormat.getTimeInstance().format(new Date());
         Toast.makeText(this, "Location change update recieved", Toast.LENGTH_SHORT).show();
+        Log.i(TAG, "Location update recieved");
 
         // Update google map to center around
         LatLng ll = new LatLng(location.getLatitude(), location.getLongitude());

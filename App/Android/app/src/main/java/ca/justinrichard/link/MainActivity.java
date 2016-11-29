@@ -21,6 +21,10 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.amazonaws.mobile.AWSMobileClient;
+import com.amazonaws.mobile.user.IdentityManager;
+import com.amazonaws.mobile.user.IdentityProvider;
+import com.amazonaws.mobile.user.signin.SignInManager;
+import com.amazonaws.mobile.user.signin.SignInProvider;
 import com.github.clans.fab.FloatingActionMenu;
 import com.github.clans.fab.FloatingActionButton;
 import com.nostra13.universalimageloader.core.ImageLoader;
@@ -86,6 +90,7 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Setup the toolbar
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -255,3 +260,5 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
         }
     }
 }
+
+
