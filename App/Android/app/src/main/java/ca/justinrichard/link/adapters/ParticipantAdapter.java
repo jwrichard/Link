@@ -42,7 +42,7 @@ public class ParticipantAdapter extends ArrayAdapter<Participant> {
         TextView altitudeDifference = (TextView) convertView.findViewById(R.id.altitudeDifference);
         TextView distance = (TextView) convertView.findViewById(R.id.distance);
 
-        ImageView profileImage = (ImageView) convertView.findViewById(R.id.linkImage);
+        ImageView profileImage = (ImageView) convertView.findViewById(R.id.profileImage);
 
         // Populate the data into the template view using the data object
         displayName.setText(item.getDisplayName());

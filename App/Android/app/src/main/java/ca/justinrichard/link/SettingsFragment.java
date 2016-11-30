@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ListView;
 
 
 /**
@@ -25,6 +26,7 @@ import android.view.ViewGroup;
  */
 public class SettingsFragment extends android.support.v4.preference.PreferenceFragment {
 
+    private final String TAG = "SettingsFragment";
     private OnFragmentInteractionListener mListener;
 
     public SettingsFragment() {

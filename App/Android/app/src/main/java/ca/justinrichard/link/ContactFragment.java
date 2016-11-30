@@ -213,7 +213,7 @@ public class ContactFragment extends Fragment {
             // Tell adapter to update the list
             adapter.notifyDataSetChanged();
             mSwipeRefreshLayout.setRefreshing(false);
-            Toast.makeText(getApplicationContext(), "Successfully refreshed contacts!", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getApplicationContext(), "Successfully refreshed contacts!", Toast.LENGTH_SHORT).show();
         }
     }
 

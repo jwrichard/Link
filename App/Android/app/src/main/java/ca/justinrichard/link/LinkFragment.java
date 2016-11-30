@@ -202,7 +202,7 @@ public class LinkFragment extends Fragment {
                 // Tell adapter to update the list
                 adapter.notifyDataSetChanged();
                 mSwipeRefreshLayout.setRefreshing(false);
-                Toast.makeText(getApplicationContext(), "Successfully refreshed Links!", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getApplicationContext(), "Successfully refreshed Links!", Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(getApplicationContext(), "Failed to update Links", Toast.LENGTH_SHORT).show();
             }
