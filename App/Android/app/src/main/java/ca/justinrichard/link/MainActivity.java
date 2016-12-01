@@ -21,18 +21,10 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.amazonaws.mobile.AWSMobileClient;
-import com.amazonaws.mobile.user.IdentityManager;
-import com.amazonaws.mobile.user.IdentityProvider;
-import com.amazonaws.mobile.user.signin.SignInManager;
-import com.amazonaws.mobile.user.signin.SignInProvider;
 import com.github.clans.fab.FloatingActionMenu;
 import com.github.clans.fab.FloatingActionButton;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
-
-import ca.justinrichard.link.models.Contact;
-
-import static com.facebook.FacebookSdk.getApplicationContext;
 
 
 public class MainActivity extends AppCompatActivity implements ContactFragment.OnFragmentInteractionListener, LinkFragment.OnFragmentInteractionListener, SettingsFragment.OnFragmentInteractionListener {
@@ -216,19 +208,16 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
+        // noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             mViewPager.setCurrentItem(2, false);
             return true;
         }
-
         if (id == R.id.menu_logout) {
             AWSMobileClient.defaultMobileClient().getIdentityManager().getCurrentIdentityProvider().signOut();
             Intent intent = new Intent(MainActivity.this, SignInActivity.class);
             startActivity(intent);
         }
-
         return super.onOptionsItemSelected(item);
     }
 

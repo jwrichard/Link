@@ -16,6 +16,9 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -35,6 +38,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -51,11 +55,15 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected static final int REQUEST_CHECK_SETTINGS = 0x1;
     public static final long UPDATE_INTERVAL_IN_MILLISECONDS = 10000;
     public static final long FASTEST_UPDATE_INTERVAL_IN_MILLISECONDS = UPDATE_INTERVAL_IN_MILLISECONDS / 2;
+    private float mScale;
 
     // Globals
     private String linkId;
     private GoogleMap mGoogleMap;
     SupportMapFragment mapFragment;
+
+    // Menu
+    private Menu mMenu;
 
     // List adapter
     private ParticipantAdapter adapter;
@@ -80,7 +88,6 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Location mLastLocation;
     private LocationRequest mLocationRequest;
     Marker mCurrLocationMarker;
-    ArrayList<Marker> mMarkerList;
     LocationManager locationManager;
 
     private final String TAG = "LinkActivity";
@@ -117,7 +124,7 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
             } finally {
                 // 100% guarantee that this always happens, even if
                 // your update method throws an exception
-                mHandler.postDelayed(mTimerDecrementor, 1000);
+                mHandler.postDelayed(mTimerDecrementor, 25);
             }
         }
     };
@@ -140,6 +147,10 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
                 refreshContent();
             }
         });
+
+        // Save pixel density
+        // Get the screen's density scale
+        final float mScale = getResources().getDisplayMetrics().density;
 
         // Get our progress bar
         mProgressBar = (ProgressBar) findViewById(R.id.progressBar);
@@ -164,6 +175,52 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_link, menu);
+        mMenu = menu;
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+        // noinspection SimplifiableIfStatement
+        if (id == R.id.action_notify) {
+            Toast.makeText(this, "Push notification sent - TODO", Toast.LENGTH_LONG).show();
+            return true;
+        }
+        if (id == R.id.action_pause) {
+            // Stop runnables if running
+            mHandler.removeCallbacks(mLooper);
+            mHandler.removeCallbacks(mTimerDecrementor);
+            // Hide pause buttons and show resume button
+            MenuItem mPause = mMenu.findItem(R.id.action_pause);
+            MenuItem mResume = mMenu.findItem(R.id.action_resume);
+            mPause.setVisible(false);
+            mResume.setVisible(true);
+            return true;
+        }
+        if (id == R.id.action_resume) {
+            // Start the runnables
+            if(mLooper != null && mTimerDecrementor != null){
+                mLooper.run();
+                mTimerDecrementor.run();
+            }
+            // Hide this menu item and show the pause button
+            MenuItem mPause = mMenu.findItem(R.id.action_pause);
+            MenuItem mResume = mMenu.findItem(R.id.action_resume);
+            mPause.setVisible(true);
+            mResume.setVisible(false);
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 
 
@@ -274,7 +331,13 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
             mGoogleMap.animateCamera(CameraUpdateFactory.zoomTo(17));
         }
 
+        // Update my location
         mLastLocation = location;
+
+        // Give our list adapter our new location so it can update with relevant distances
+        adapter.updateMyLocation(location);
+
+        // TODO
         if (mCurrLocationMarker != null){
             mCurrLocationMarker.remove();
         }
@@ -337,8 +400,8 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Get update rates from user preferences
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         updateRate = prefs.getInt("data_link_refresh_rate", 30);
-        mProgressBar.setMax(updateRate);
-        mProgressBar.setProgress(updateRate);
+        mProgressBar.setMax(updateRate*40);
+        mProgressBar.setProgress(updateRate*40);
 
         // Run async tasks to call updates periodically
         mHandler = new Handler();
@@ -367,7 +430,7 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
             int results = pql.size();
             for (int i = 0; i < results; i++) {
                 ParticipantsDO item = pql.get(i);
-                Participant p = new Participant(item.getUserId(), item.getLastUpdate(), item.getAltitude(), item.getLat(), item.getLong());
+                Participant p = new Participant(item.getUserId(), item.getLastUpdate().longValue(), item.getAltitude(), item.getLat(), item.getLong());
                 UsersDO pUser = db.GetUserFromUserId(item.getUserId());
                 p.setDisplayName(pUser.getFirstName() + " " + pUser.getLastName());
                 p.setImageUrl(pUser.getImageUrl());
@@ -382,18 +445,36 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
             // Empty all items
             listParticipants.clear();
 
+            // Remove all markers
+            mGoogleMap.clear();
+
             // Get iterator and loop through and add links to listView
             Iterator<Participant> participantIterator = participants.iterator();
+            float hue = 0f;
             while (participantIterator.hasNext()) {
                 Participant item = participantIterator.next();
+
+                // Update the map by removing all markers and adding a new one with matching color for each user
+                if(item.getLatitude() != 0 || item.getLongitude() != 0){
+                    mGoogleMap.addMarker(new MarkerOptions()
+                            .position(new LatLng(item.getLatitude(), item.getLongitude()))
+                            .title(item.getDisplayName())
+                            .icon(BitmapDescriptorFactory.defaultMarker(hue%360)));
+                }
+                item.setHue(hue);
                 listParticipants.add(item);
+                hue += 36;
             }
 
+            // Set height of maps fragment
+            //LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, (int)(400*mScale + 0.5f));
+            //mapFragment.getView().setLayoutParams(layoutParams);
+
+
             // Tell adapter to update the list
-            mProgressBar.setProgress(updateRate);
+            mProgressBar.setProgress(updateRate*40);
             adapter.notifyDataSetChanged();
             mSwipeRefreshLayout.setRefreshing(false);
-            Toast.makeText(getApplicationContext(), "Successfully refreshed link!", Toast.LENGTH_SHORT).show();
         }
     }
 

@@ -13,30 +13,32 @@
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
-        android:layout_height="300dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginBottom="0dp"
         tools:context="ca.justinrichard.link.LinkActivityHel" />
 
     <ProgressBar
-        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        style="@android:style/Widget.ProgressBar.Horizontal"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="5dp"
         android:id="@+id/progressBar"
         android:max="100"
         android:progress="30"
-        android:layout_margin="0dp"
+        android:progressTint="@color/colorPrimary"
+        android:progressBackgroundTint="@color/defaultActivity"
         android:indeterminate="false" />
-
 
     <android.support.v4.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         android:id="@+id/swiperefreshlink"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="200dp"
         tools:context="ca.justinrichard.link.LinkFragment">
 
         <ListView
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="150dp"
             android:id="@+id/linkListView"
             android:divider="?android:attr/listDivider"
             android:headerDividersEnabled="false"

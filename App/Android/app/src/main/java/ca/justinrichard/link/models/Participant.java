@@ -13,9 +13,10 @@ public class Participant {
     public Double altitude;
     public Double latitude;
     public Double longitude;
-    public Double lastUpdate;
+    public Long lastUpdate;
+    public float hue = 180;
 
-    public Participant(String userId, Double lastUpdate, Double altitude, Double latitude, Double longitude) {
+    public Participant(String userId, Long lastUpdate, Double altitude, Double latitude, Double longitude) {
         this.userId = userId;
         this.altitude = altitude;
         this.latitude = latitude;
@@ -35,11 +36,12 @@ public class Participant {
     public Double getLongitude(){
         return this.longitude;
     }
-    public Double getLastUpdate(){
+    public Long getLastUpdate(){
         return this.lastUpdate;
     }
     public String getDisplayName() { return this.displayName; }
     public String getImageUrl() { return this.imageUrl; }
+    public float getHue() { return this.hue; }
 
     public void setDisplayName(String s){
         this.displayName = s;
@@ -47,6 +49,7 @@ public class Participant {
     public void setImageUrl(String s){
         this.imageUrl = s;
     }
+    public void setHue(float f) { this.hue = f; };
 
 
     @Override
