@@ -4,9 +4,11 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -189,7 +191,12 @@ public class SignInActivity extends Activity {
                     // Does not have a username
                     return false;
                 } else {
-                    // User has a username
+                    // User has a username, make sure its saved
+                    Log.i(LOG_TAG, "Saving my username to prefs -> "+user.getUsername());
+                    SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getBaseContext());
+                    SharedPreferences.Editor editor = settings.edit();
+                    editor.putString("myUsername", user.getUsername());
+                    editor.commit();
                     return true;
                 }
             }

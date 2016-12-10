@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.graphics.Color;
 
@@ -53,7 +54,7 @@ public class ParticipantAdapter extends ArrayAdapter<Participant> {
 
         // Calculate and display distance and altitude to that user if set
         TextView distanceTextView = (TextView) convertView.findViewById(R.id.distance);
-        TextView altitudeDifference = (TextView) convertView.findViewById(R.id.altitudeDifference);
+        //TextView altitudeDifference = (TextView) convertView.findViewById(R.id.altitudeDifference);
         if(item.getLatitude() != 0 || item.getLongitude() != 0 || item.getAltitude() != 0){
             Location theirLocation = new Location("");
             theirLocation.setAltitude(item.getAltitude());
@@ -66,6 +67,7 @@ public class ParticipantAdapter extends ArrayAdapter<Participant> {
                 distanceTextView.setText(String.format(Locale.US, "%.0f", distance)+"m");
             }
             // Display altitude difference
+            /*
             double altitudeDistance;
             if(mLocation.getAltitude() != 0 && theirLocation.getAltitude() != 0){
                 altitudeDistance = mLocation.getAltitude() - theirLocation.getAltitude();
@@ -73,8 +75,9 @@ public class ParticipantAdapter extends ArrayAdapter<Participant> {
                 altitudeDistance = 0;
             }
             altitudeDifference.setText(floor((altitudeDistance/3.5))+" floors");
+            */
         } else {
-            altitudeDifference.setText("-");
+            //altitudeDifference.setText("-");
             distanceTextView.setText("-");
         }
 
@@ -91,9 +94,14 @@ public class ParticipantAdapter extends ArrayAdapter<Participant> {
         ImageView profileImage = (ImageView) convertView.findViewById(R.id.profileImage);
         if(item.getImageUrl() != null) imageLoader.displayImage(item.getImageUrl(), profileImage);
 
-        // Set background color based on hue value from participant
+        // Set background color of image based on hue value from participant
         float[] color = {item.getHue(), 1f, 1f};
         profileImage.setBackgroundColor(Color.HSVToColor(color));
+
+        // Set bg color of whole item
+        LinearLayout ll = (LinearLayout) convertView.findViewById(R.id.participantItem);
+        float[] lighterColor = {item.getHue(), .2f, 1f};
+        ll.setBackgroundColor(Color.HSVToColor(lighterColor));
 
         // Return the completed view to render on screen
         return convertView;

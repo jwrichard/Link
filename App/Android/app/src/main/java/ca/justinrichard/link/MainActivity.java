@@ -23,6 +23,7 @@ import android.widget.Toast;
 import com.amazonaws.mobile.AWSMobileClient;
 import com.github.clans.fab.FloatingActionMenu;
 import com.github.clans.fab.FloatingActionButton;
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 
@@ -81,6 +82,11 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Ensure we have a firebase id
+        Log.i(TAG, "Getting firebase token...");
+        String firebaseToken = FirebaseInstanceId.getInstance().getToken();
+        Log.i(TAG, "Token is: "+firebaseToken);
 
         // Setup the toolbar
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);

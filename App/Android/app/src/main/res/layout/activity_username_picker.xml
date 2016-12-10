@@ -1,6 +1,5 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:background="@drawable/ic_background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center_horizontal"
@@ -30,8 +29,7 @@
                 android:id="@+id/title"
                 tools:text="Choose a username"
                 android:textAppearance="@style/TextAppearance.AppCompat.Headline"
-                android:textSize="24sp"
-                android:textColor="@color/cardview_light_background" />
+                android:textSize="24sp" />
 
             <TextView
                 android:text="People can add you as a contact through this username. This is changeable at any time."
@@ -40,7 +38,6 @@
                 android:id="@+id/info"
                 android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                 android:textSize="14sp"
-                android:textColor="@color/cardview_light_background"
                 android:layout_marginTop="10dp"/>
 
             <EditText
@@ -58,9 +55,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Next"
+                android:text="Submit"
                 android:textStyle="bold"
-                style="@android:style/Widget.Holo.Button" />
+                style="@android:style/Widget.Material.Button"
+                android:background="@color/colorPrimary"
+                android:textColor="@android:color/background_light" />
 
         </LinearLayout>
     </ScrollView>

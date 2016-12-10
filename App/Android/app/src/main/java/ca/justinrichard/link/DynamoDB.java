@@ -5,6 +5,7 @@ import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.PaginatedQueryList;
 import com.amazonaws.models.nosql.ContactsDO;
+import com.amazonaws.models.nosql.FirebaseDO;
 import com.amazonaws.models.nosql.LinksDO;
 import com.amazonaws.models.nosql.ParticipantsDO;
 import com.amazonaws.models.nosql.UsersDO;
@@ -61,57 +62,47 @@ public class DynamoDB {
         return pql;
     }
 
-    public LinksDO GetLinkFromId(String linkId){
+    public LinksDO GetLinkFromId(String linkId, String myUserId){
         LinksDO result = new LinksDO();
         result.setId(linkId);
         DynamoDBQueryExpression<LinksDO> query = new DynamoDBQueryExpression<LinksDO>().withHashKeyValues(result).withConsistentRead(false);
         PaginatedQueryList<LinksDO> pql = dynamoDBMapper.query(LinksDO.class, query);
         if(!pql.isEmpty()){
-            return pql.get(0);
+            result = pql.get(0);
         }
-        return null;
-    }
 
-    // Called by a Link refresh if no group alias is set, so generate a name based off of users that are not me
-    public String GetLinkTitle(String linkId, String myUserId){
-        // Result string
-        String s = "";
-
-        // Get list of participants for that LinkId
-        ParticipantsDO result = new ParticipantsDO();
-        result.setLinkId(linkId);
-        DynamoDBQueryExpression<ParticipantsDO> query = new DynamoDBQueryExpression<ParticipantsDO>().withHashKeyValues(result).withConsistentRead(false);
-        PaginatedQueryList<ParticipantsDO> pql = dynamoDBMapper.query(ParticipantsDO.class, query);
-        int numResults = pql.size();
+        // Find group alias, image url and last update
+        String s = ""; // Result string
+        String imageUrl = "";
+        Double lastUpdate = 0.0;
+        ParticipantsDO participant = new ParticipantsDO();
+        participant.setLinkId(linkId);
+        DynamoDBQueryExpression<ParticipantsDO> query2 = new DynamoDBQueryExpression<ParticipantsDO>().withHashKeyValues(participant).withConsistentRead(false);
+        PaginatedQueryList<ParticipantsDO> pql2 = dynamoDBMapper.query(ParticipantsDO.class, query2);
+        int numResults = pql2.size();
         boolean first = true;
         for(int i=0; i<numResults; i++){
-            ParticipantsDO item = pql.get(i);
+            ParticipantsDO item = pql2.get(i);
+
+            // Store the most recent update time
+            if(item.getLastUpdate() > lastUpdate){
+                    lastUpdate = item.getLastUpdate();
+            }
+
+            // Get a name and imageUrl if it isnt me
             if(!item.getUserId().equals(myUserId)){
                 UsersDO user = this.GetUserFromUserId(item.getUserId());
+                imageUrl = user.getImageUrl();
+                // Make csv if more than 1 user
                 if(!first) s+= ", ";
                 s += user.getFirstName()+" "+user.getLastName();
                 first = false;
             }
         }
-        return s;
-    }
-
-    // Called if group has not set an image, so set the image to be the first user thats not me
-    public String GetLinkImageUrl(String linkId, String myUserId){
-        // Get list of participants for that LinkId
-        ParticipantsDO result = new ParticipantsDO();
-        result.setLinkId(linkId);
-        DynamoDBQueryExpression<ParticipantsDO> query = new DynamoDBQueryExpression<ParticipantsDO>().withHashKeyValues(result).withConsistentRead(false);
-        PaginatedQueryList<ParticipantsDO> pql = dynamoDBMapper.query(ParticipantsDO.class, query);
-        int numResults = pql.size();
-        for(int i=0; i<numResults; i++){
-            ParticipantsDO item = pql.get(i);
-            if(!item.getUserId().equals(myUserId)){
-                UsersDO user = this.GetUserFromUserId(item.getUserId());
-                return user.getImageUrl();
-            }
-        }
-        return null;
+        result.setGroupAlias(s);
+        result.setGroupImageUrl(imageUrl);
+        result.setLastUpdate(lastUpdate);
+        return result;
     }
 
     public PaginatedQueryList<ContactsDO> GetContactsForUser(String userId){
@@ -156,6 +147,14 @@ public class DynamoDB {
             }
         }
         return false;
+    }
+
+    // Stores a firebase instance Id for a user
+    public void StoreFirebaseInstanceId(String userId, String firebaseInstanceId){
+        FirebaseDO f = new FirebaseDO();
+        f.setUserId(userId);
+        f.setFirebaseInstanceId(firebaseInstanceId);
+        dynamoDBMapper.save(f);
     }
 
 }

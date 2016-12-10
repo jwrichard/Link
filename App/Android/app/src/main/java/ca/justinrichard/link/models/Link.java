@@ -1,11 +1,16 @@
 package ca.justinrichard.link.models;
 
+import android.content.Context;
+import android.text.format.DateUtils;
+
 import com.amazonaws.models.nosql.ParticipantsDO;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+
+import ca.justinrichard.link.MainActivity;
 
 /**
  * Created by Justin on 11/1/2016.
@@ -18,18 +23,26 @@ public class Link {
     public Double lastUpdate;
     public ArrayList<ParticipantsDO> participants;
 
-    public Link(String linkId, String groupAlias, String groupImage, Double lastUpdate) {
+    // variable to hold context
+    private Context context;
+
+    public Link(Context c, String linkId, String groupAlias, String groupImage, Double lastUpdate) {
         this.linkId = linkId;
         this.groupAlias = groupAlias;
         this.groupImage = groupImage;
         this.lastUpdate = lastUpdate;
+        this.context = c;
     }
 
     public String getLinkId(){
         return this.linkId;
     }
     public String getGroupAlias(){
-        return this.groupAlias;
+        if(this.groupAlias != null){
+            return this.groupAlias;
+        } else {
+            return "Link session";
+        }
     }
     public String getGroupImage(){
         return this.groupImage;
@@ -38,9 +51,8 @@ public class Link {
         if(this.lastUpdate == 0.0){
             return "New session";
         } else {
-            Date date = new Date(this.lastUpdate.longValue());
-            DateFormat df = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
-            return df.format(date);
+            return DateUtils.getRelativeDateTimeString(context, this.lastUpdate.longValue(), 0L, DateUtils.WEEK_IN_MILLIS, 0).toString();
+
         }
     }
     public Long getLastUpdateNum(){

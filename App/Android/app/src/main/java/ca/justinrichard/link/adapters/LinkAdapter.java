@@ -1,6 +1,7 @@
 package ca.justinrichard.link.adapters;
 
 import android.content.Context;
+import android.graphics.Typeface;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -43,7 +44,7 @@ public class LinkAdapter extends ArrayAdapter<Link> {
 
         // Populate the data into the template view using the data object
         groupAlias.setText(link.getGroupAlias());
-        linkLastUpdate.setText(link.getLastUpdate().toString());
+        linkLastUpdate.setText(link.getLastUpdate());
 
         // Get singleton instance of image loader and use it to load and set the image for the contact
         ImageLoader imageLoader = ImageLoader.getInstance();
@@ -52,6 +53,9 @@ public class LinkAdapter extends ArrayAdapter<Link> {
         // Add indicator if the link session is active - if update within last 10 minutes
         if(link.getLastUpdateNum() > System.currentTimeMillis()-600000){
             linkActive.setImageResource(R.drawable.ic_link_active);
+            // Make the text bold for group alias and last update
+            groupAlias.setTypeface(null, Typeface.BOLD);
+            linkLastUpdate.setTypeface(null, Typeface.BOLD);
         } else {
             linkActive.setImageDrawable(null);
         }

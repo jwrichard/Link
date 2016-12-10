@@ -44,7 +44,4 @@
             android:headerDividersEnabled="false"
             android:footerDividersEnabled="false" />
     </android.support.v4.widget.SwipeRefreshLayout>
-
-
-
 </LinearLayout>

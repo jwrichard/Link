@@ -50,6 +50,7 @@ public class SettingsFragment extends android.support.v4.preference.PreferenceFr
         // Load the preferences from an XML resource
         addPreferencesFromResource(R.xml.preferences);
 
+
         // Append current username to username preference
         Preference p = findPreference("myUsername");
         if(p != null){
@@ -57,6 +58,12 @@ public class SettingsFragment extends android.support.v4.preference.PreferenceFr
             Log.i("SettingsFragment", "Attempting to append username of "+settings.getString("myUsername", ""));
             p.setSummary(p.getSummary()+settings.getString("myUsername", ""));
         }
+    }
+
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        View lv = getView().findViewById(android.R.id.list);
+        if (lv != null) lv.setPadding(0, 0, 0, 0);
     }
 
     @Override

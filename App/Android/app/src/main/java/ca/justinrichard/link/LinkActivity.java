@@ -3,6 +3,7 @@ package ca.justinrichard.link;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.location.Criteria;
 import android.os.Handler;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -18,6 +19,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -40,6 +43,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -103,7 +107,6 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
         public void run() {
             try {
                 // Call to get updates and send my own
-                new updateLink().execute();
                 new updateLinkWithMyLocation().execute();
             } finally {
                 // 100% guarantee that this always happens, even if
@@ -156,7 +159,17 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
         mProgressBar = (ProgressBar) findViewById(R.id.progressBar);
 
         // Define an adapter for our list view so we can add items
-        ListView listView = (ListView) findViewById(R.id.linkListView);
+        final ListView listView = (ListView) findViewById(R.id.linkListView);
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Participant p = (Participant) listView.getItemAtPosition(position);
+                if(p.getLatitude() != 0  || p.getLongitude() != 0){
+                    LatLng latlng = new LatLng(p.getLatitude(), p.getLongitude());
+                    mGoogleMap.animateCamera(CameraUpdateFactory.newLatLng(latlng));
+                }
+            }
+        });
 
         // Set and add the adapter to the listView
         adapter = new ParticipantAdapter(this, listParticipants);
@@ -279,6 +292,12 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Save the map object
         mGoogleMap = googleMap;
 
+        // Move to my last location
+        if(mLastLocation != null){
+            LatLng latlng = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+            mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng, 17.f));
+        }
+
         // Initialize Google Play Services
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
             if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
@@ -311,6 +330,12 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
+            mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
+            // Move to my last location
+            if(mGoogleMap != null){
+                LatLng latlng = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
+                mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng, 17.f));
+            }
         }
     }
 
@@ -325,22 +350,11 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Get my current lat long
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
 
-        // Move map camera only if first update
-        if(mLastLocation == null){
-            mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-            mGoogleMap.animateCamera(CameraUpdateFactory.zoomTo(17));
-        }
-
         // Update my location
         mLastLocation = location;
 
         // Give our list adapter our new location so it can update with relevant distances
         adapter.updateMyLocation(location);
-
-        // TODO
-        if (mCurrLocationMarker != null){
-            mCurrLocationMarker.remove();
-        }
     }
 
     public boolean checkLocationPermission() {
@@ -505,7 +519,8 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
         @Override
         protected void onPostExecute(Boolean success) {
             if(success){
-                Log.i(TAG, "Sent my location to the server!");
+                Log.i(TAG, "Sent my location to the server! - Getting updates now");
+                new updateLink().execute();
             } else {
                 Log.i(TAG, "Failed to send my location to the server!");
             }

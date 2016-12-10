@@ -172,7 +172,7 @@ public class LinkFragment extends Fragment {
             Log.i(TAG, "Iterating through participant objects of count: "+results);
             for(int i=0; i < results; i++){
                 ParticipantsDO item = pql.get(i);
-                LinksDO link = db.GetLinkFromId(item.getLinkId());
+                LinksDO link = db.GetLinkFromId(item.getLinkId(), userId);
                 if(link != null){
                     links.add(link);
                     Log.i(TAG, "Valid link found, adding to list");
@@ -188,9 +188,10 @@ public class LinkFragment extends Fragment {
             Iterator<LinksDO> linksDOIterator = links.iterator();
             while(linksDOIterator.hasNext()){
                 LinksDO item = linksDOIterator.next();
-                String groupAlias = (item.getGroupAlias() == null ? db.GetLinkTitle(item.getId(), userId) : item.getGroupAlias());
-                String imageUrl = (item.getGroupImageUrl() == null ? db.GetLinkImageUrl(item.getId(), userId) : item.getGroupImageUrl());
-                Link itemToAdd = new Link(item.getId(), groupAlias, imageUrl, item.getLastUpdate());
+                String groupAlias = item.getGroupAlias();
+                String imageUrl = item.getGroupImageUrl();
+                Double lastUpdate = item.getLastUpdate();
+                Link itemToAdd = new Link(getContext(), item.getId(), groupAlias, imageUrl, lastUpdate);
                 listLinks.add(itemToAdd);
             }
             return true;
