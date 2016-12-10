@@ -1,0 +1,74 @@
+{
+  "project_info": {
+    "project_number": "413451298336",
+    "firebase_url": "https://authentic-root-89903.firebaseio.com",
+    "project_id": "authentic-root-89903",
+    "storage_bucket": "authentic-root-89903.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:413451298336:android:af5fd0d1d81f1d0a",
+        "android_client_info": {
+          "package_name": "ca.justinrichard.link"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "413451298336-lv66ifbjgd8k1b9nfhkumbatu53h56hb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "ca.justinrichard.link",
+            "certificate_hash": "8BAFEF7F48D8C32DA5513FE8103F20820D03F927"
+          }
+        },
+        {
+          "client_id": "413451298336-1ijmpkb3n90ra2r3vsv7rcpumd5hnrj4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "ca.justinrichard.link",
+            "certificate_hash": "7A8A2E88BC3ABA214E971012ED718119C44AC674"
+          }
+        },
+        {
+          "client_id": "413451298336-fja239rvi21iq0etmq5l305snmrlkd1p.apps.googleusercontent.com",
+          "client_type": 3
+        },
+        {
+          "client_id": "413451298336-jv66f1f3jahos0uvagaqchm77bqh0op6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC8KYAlBI_1VzXGmeaN6bZykBVOsa9w32E"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "413451298336-23apeuc6ltpdrvuf0ut963bu4knlr68l.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "413451298336"
+              }
+            },
+            {
+              "client_id": "413451298336-fja239rvi21iq0etmq5l305snmrlkd1p.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
