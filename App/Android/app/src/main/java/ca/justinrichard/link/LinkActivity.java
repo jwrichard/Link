@@ -3,7 +3,6 @@ package ca.justinrichard.link;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.location.Criteria;
 import android.os.Handler;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -21,7 +20,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -43,10 +41,16 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -206,7 +210,8 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
         int id = item.getItemId();
         // noinspection SimplifiableIfStatement
         if (id == R.id.action_notify) {
-            Toast.makeText(this, "Push notification sent - TODO", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "Push notification sent", Toast.LENGTH_LONG).show();
+            new sendPushNotification().execute();
             return true;
         }
         if (id == R.id.action_pause) {
@@ -269,8 +274,13 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
         }
         // Stop runnables if running
-        mHandler.removeCallbacks(mLooper);
-        mHandler.removeCallbacks(mTimerDecrementor);
+        try {
+            mHandler.removeCallbacks(mLooper);
+            mHandler.removeCallbacks(mTimerDecrementor);
+        } catch(Exception e){
+            Log.e(TAG, "Unable to stop runnables, already running");
+        }
+
     }
 
     @Override
@@ -425,7 +435,7 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     // Called when an update is forced by the user
     public void refreshContent() {
-        new updateLink().execute();
+        new updateLinkWithMyLocation().execute();
     }
 
     // Async task to get updates from the server
@@ -480,11 +490,6 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
                 hue += 36;
             }
 
-            // Set height of maps fragment
-            //LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, (int)(400*mScale + 0.5f));
-            //mapFragment.getView().setLayoutParams(layoutParams);
-
-
             // Tell adapter to update the list
             mProgressBar.setProgress(updateRate*40);
             adapter.notifyDataSetChanged();
@@ -500,15 +505,17 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
         @Override
         protected Boolean doInBackground(Void... params) {
             try {
-                final DynamoDBMapper dynamoDBMapper = AWSMobileClient.defaultMobileClient().getDynamoDBMapper();
-                ParticipantsDO me = new ParticipantsDO();
-                me.setLinkId(linkId);
-                me.setUserId(userId);
-                me.setAltitude(mLastLocation.getAltitude());
-                me.setLat(mLastLocation.getLatitude());
-                me.setLong(mLastLocation.getLongitude());
-                me.setLastUpdate((double) System.currentTimeMillis());
-                dynamoDBMapper.save(me);
+                if(mLastLocation != null){
+                    final DynamoDBMapper dynamoDBMapper = AWSMobileClient.defaultMobileClient().getDynamoDBMapper();
+                    ParticipantsDO me = new ParticipantsDO();
+                    me.setLinkId(linkId);
+                    me.setUserId(userId);
+                    me.setAltitude(mLastLocation.getAltitude());
+                    me.setLat(mLastLocation.getLatitude());
+                    me.setLong(mLastLocation.getLongitude());
+                    me.setLastUpdate((double) System.currentTimeMillis());
+                    dynamoDBMapper.save(me);
+                }
                 return true;
             } catch(Exception e){
                 Log.e(TAG, "Failed to update location with e: "+e);
@@ -526,4 +533,51 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         }
     }
+
+    // Async task to send push notifications to all users in the group
+    public class sendPushNotification extends AsyncTask<Void, Void, Boolean> {
+        DynamoDB db = new DynamoDB();
+        String userId = AWSMobileClient.defaultMobileClient().getIdentityManager().getCachedUserID();
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            UsersDO me = db.GetUserFromUserId(userId);
+            String body = me.getFirstName() + " " + me.getLastName() + " wants to Link up!";
+
+            PaginatedQueryList<ParticipantsDO> pql = db.GetParticipantsFromLinkId(linkId);
+            int size = pql.size();
+            for(int i=0; i<size; i++){
+                ParticipantsDO item = pql.get(i);
+                if(! item.getUserId().equals(userId)){
+                    // If it isn't me, send a notification to this user
+                    String firebaseId = db.GetFirebaseTokenFromUserId(item.getUserId());
+                    if(firebaseId != null){
+                        // Send notification to this firebase id
+                        try {
+                            Log.i(TAG, "https://justinrichard.ca/fcm.php?id="+URLEncoder.encode(firebaseId)+"&message="+URLEncoder.encode(body)+"&linkId="+URLEncoder.encode(linkId));
+                            URL url = new URL("https://justinrichard.ca/fcm.php?id="+URLEncoder.encode(firebaseId)+"&message="+URLEncoder.encode(body)+"&linkId="+URLEncoder.encode(linkId));
+                            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                            urlConnection.setRequestMethod("GET");
+                            urlConnection.setDoOutput(true);
+                            urlConnection.setConnectTimeout(5000);
+                            urlConnection.setReadTimeout(5000);
+                            urlConnection.connect();
+                            BufferedReader rd = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+                            String content = "", line;
+                            while ((line = rd.readLine()) != null) {
+                                content += line + "\n";
+                            }
+                            Log.i(TAG, "RESPONSE: "+content);
+                            urlConnection.disconnect();
+                        } catch(Exception e){
+                            Log.e(TAG, "Unable to create request: "+e);
+                        }
+
+                    }
+                }
+            }
+            return true;
+        }
+    }
+
 }

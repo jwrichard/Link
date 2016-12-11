@@ -33,6 +33,8 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.UUID;
@@ -194,11 +196,34 @@ public class LinkFragment extends Fragment {
                 Link itemToAdd = new Link(getContext(), item.getId(), groupAlias, imageUrl, lastUpdate);
                 listLinks.add(itemToAdd);
             }
+
+            // Sort the array
+            Collections.sort(listLinks, new Comparator<Link>() {
+                public int compare(Link o1, Link o2) {
+                    if(o1.getLastUpdateNum() > o2.getLastUpdateNum()){
+                        return -1;
+                    } else {
+                        return 1;
+                    }
+                }
+            });
             return true;
         }
 
         @Override
         protected void onPostExecute(Boolean success) {
+
+            // If no items, show message
+            ListView lv = (ListView) getView().findViewById(R.id.linksListView);
+            TextView tv = (TextView) getView().findViewById(R.id.empty);
+            if(listLinks.size() == 0){
+                lv.setVisibility(View.INVISIBLE);
+                tv.setVisibility(View.VISIBLE);
+            } else {
+                lv.setVisibility(View.VISIBLE);
+                tv.setVisibility(View.INVISIBLE);
+            }
+
             if(success){
                 // Tell adapter to update the list
                 adapter.notifyDataSetChanged();

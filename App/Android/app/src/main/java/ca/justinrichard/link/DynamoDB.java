@@ -157,4 +157,15 @@ public class DynamoDB {
         dynamoDBMapper.save(f);
     }
 
+    public String GetFirebaseTokenFromUserId(String userId){
+        FirebaseDO result = new FirebaseDO();
+        result.setUserId(userId);
+        DynamoDBQueryExpression<FirebaseDO> query = new DynamoDBQueryExpression<FirebaseDO>().withHashKeyValues(result).withConsistentRead(false);
+        PaginatedQueryList<FirebaseDO> pql = dynamoDBMapper.query(FirebaseDO.class, query);
+        if(!pql.isEmpty()){
+            return pql.get(0).getFirebaseInstanceId();
+        }
+        return null;
+    }
+
 }

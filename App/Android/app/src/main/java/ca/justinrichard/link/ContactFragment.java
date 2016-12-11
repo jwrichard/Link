@@ -9,6 +9,7 @@ import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -68,19 +69,15 @@ public class ContactFragment extends Fragment {
     // Refresh Layout obj
     SwipeRefreshLayout mSwipeRefreshLayout;
 
+    // Our view
+    View view;
+
     private OnFragmentInteractionListener mListener;
 
     public ContactFragment() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @return A new instance of fragment ContactFragment.
-     */
-    // TODO: Rename and change types and number of parameters
     public static ContactFragment newInstance() {
         ContactFragment fragment = new ContactFragment();
         return fragment;
@@ -94,7 +91,7 @@ public class ContactFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view = inflater.inflate(R.layout.fragment_contact, container, false);
+        view = inflater.inflate(R.layout.fragment_contact, container, false);
 
         // Get our swipe refresh handler
         mSwipeRefreshLayout = (SwipeRefreshLayout) view.findViewById(R.id.swiperefreshcontacts);
@@ -208,6 +205,19 @@ public class ContactFragment extends Fragment {
             while(contactIterator.hasNext()){
                 Contact item = contactIterator.next();
                 listContacts.add(item);
+            }
+
+            // If no items, show message
+            if(view != null) {
+                ListView lv = (ListView) view.findViewById(R.id.contactsListView);
+                TextView tv = (TextView) view.findViewById(R.id.empty);
+                if (listContacts.size() == 0) {
+                    lv.setVisibility(View.INVISIBLE);
+                    tv.setVisibility(View.VISIBLE);
+                } else {
+                    lv.setVisibility(View.VISIBLE);
+                    tv.setVisibility(View.INVISIBLE);
+                }
             }
 
             // Tell adapter to update the list

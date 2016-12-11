@@ -9,7 +9,9 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
+import com.nostra13.universalimageloader.core.display.RoundedBitmapDisplayer;
 
 import java.util.ArrayList;
 
@@ -48,7 +50,8 @@ public class LinkAdapter extends ArrayAdapter<Link> {
 
         // Get singleton instance of image loader and use it to load and set the image for the contact
         ImageLoader imageLoader = ImageLoader.getInstance();
-        if(groupImage != null) imageLoader.displayImage(link.getGroupImage(), groupImage);
+        DisplayImageOptions dio = new DisplayImageOptions.Builder().displayer(new RoundedBitmapDisplayer(1000)).build();
+        if(groupImage != null) imageLoader.displayImage(link.getGroupImage(), groupImage, dio);
 
         // Add indicator if the link session is active - if update within last 10 minutes
         if(link.getLastUpdateNum() > System.currentTimeMillis()-600000){
@@ -57,7 +60,7 @@ public class LinkAdapter extends ArrayAdapter<Link> {
             groupAlias.setTypeface(null, Typeface.BOLD);
             linkLastUpdate.setTypeface(null, Typeface.BOLD);
         } else {
-            linkActive.setImageDrawable(null);
+            linkActive.setImageResource(R.drawable.ic_link_inactive);
         }
 
         // Return the completed view to render on screen

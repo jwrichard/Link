@@ -41,6 +41,8 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private FragmentManager mFragmentManager;
 
+    private ContactFragment mCF;
+
     private FloatingActionMenu mMenu;
     private FloatingActionButton mFab, mSubFab1, mSubFab2;
 
@@ -86,7 +88,8 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
         // Ensure we have a firebase id
         Log.i(TAG, "Getting firebase token...");
         String firebaseToken = FirebaseInstanceId.getInstance().getToken();
-        Log.i(TAG, "Token is: "+firebaseToken);
+        Log.i(TAG, "Sending token to db: "+firebaseToken);
+        sendRegistrationToServer(firebaseToken);
 
         // Setup the toolbar
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -137,32 +140,30 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
         // New Contact
         mSubFab2.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v){
-                // Open contact tab
-                tabLayout.getTabAt(0).select();
-                mMenu.close(true);
+            // Open contact tab
+            tabLayout.getTabAt(0).select();
+            mMenu.close(true);
 
-                // Initiate new contact prompt
-                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                final View view = getLayoutInflater().inflate(R.layout.contact_prompt, null);
-                builder.setView(view);
-                builder.setMessage("Enter a username to add as a contact").setTitle("Add a contact");
-                builder.setPositiveButton("Submit", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        // User clicked OK button - call async task to add contact and reprompt on failure
-                        EditText usernameTextEdit = (EditText) view.findViewById(R.id.username);
-                        // Get instance of contact fragment
-                        ContactFragment fragment = (ContactFragment) mFragmentManager.findFragmentById(R.id.swiperefreshcontacts);
-                        new addContact(usernameTextEdit.getText().toString(), fragment).execute();
-                    }
-                });
-                builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        // User cancelled the dialog
-                    }
-                });
+            // Initiate new contact prompt
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            final View view = getLayoutInflater().inflate(R.layout.contact_prompt, null);
+            builder.setView(view);
+            builder.setMessage("Enter a username to add as a contact").setTitle("Add a contact");
+            builder.setPositiveButton("Submit", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    // User clicked OK button - call async task to add contact and reprompt on failure
+                    EditText usernameTextEdit = (EditText) view.findViewById(R.id.username);
+                    new addContact(usernameTextEdit.getText().toString()).execute();
+                }
+            });
+            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    // User cancelled the dialog
+                }
+            });
 
-                dialog = builder.create();
-                dialog.show();
+            dialog = builder.create();
+            dialog.show();
             }
         });
     }
@@ -172,11 +173,9 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
         DynamoDB db = new DynamoDB();
         String userId = AWSMobileClient.defaultMobileClient().getIdentityManager().getCachedUserID();
         String username;
-        ContactFragment fragment;
 
-        public addContact(String username, ContactFragment fragment){
+        public addContact(String username){
             this.username = username;
-            this.fragment = fragment;
         }
 
         @Override
@@ -189,9 +188,7 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
             if(success){
                 final TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
                 tabLayout.getTabAt(0).select();
-                if(fragment != null){
-                    fragment.refreshContent();
-                }
+                if(mCF != null) mCF.refreshContent();
                 Toast.makeText(getApplicationContext(), "Contact added", Toast.LENGTH_SHORT).show();
             } else {
                 // Edit the dialog and re-prompt
@@ -220,9 +217,14 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
             return true;
         }
         if (id == R.id.menu_logout) {
-            AWSMobileClient.defaultMobileClient().getIdentityManager().getCurrentIdentityProvider().signOut();
-            Intent intent = new Intent(MainActivity.this, SignInActivity.class);
-            startActivity(intent);
+            try {
+                AWSMobileClient.defaultMobileClient().getIdentityManager().getCurrentIdentityProvider().signOut();
+            } catch(Exception e){
+                Log.wtf(TAG, "Already signed out?");
+            } finally {
+                Intent intent = new Intent(MainActivity.this, SignInActivity.class);
+                startActivity(intent);
+            }
         }
         return super.onOptionsItemSelected(item);
     }
@@ -241,7 +243,7 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
         public Fragment getItem(int position) {
             // getItem is called to instantiate the fragment for the given page.
             switch(position){
-                case 0: return ContactFragment.newInstance();
+                case 0: return mCF = ContactFragment.newInstance();
                 case 1: return LinkFragment.newInstance();
                 case 2: return SettingsFragment.newInstance();
                 default: return ContactFragment.newInstance();
@@ -252,6 +254,35 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
         public int getCount() {
             // Show 3 total pages.
             return 3;
+        }
+    }
+
+    /**
+     * Persist token to third-party servers.
+     *
+     * Modify this method to associate the user's FCM InstanceID token with any server-side account
+     * maintained by your application.
+     *
+     * @param token The new token.
+     */
+    private void sendRegistrationToServer(String token) {
+        new sendAsync(token).execute();
+    }
+
+    public class sendAsync extends AsyncTask<Void, Void, Void> {
+        DynamoDB db = new DynamoDB();
+        String userId = AWSMobileClient.defaultMobileClient().getIdentityManager().getCachedUserID();
+        String token;
+
+        public sendAsync(String token){
+            this.token = token;
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            Log.i(TAG, "Calling DB store for my registration token");
+            db.StoreFirebaseInstanceId(userId, token);
+            return null;
         }
     }
 }

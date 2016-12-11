@@ -5,12 +5,26 @@
     android:layout_height="wrap_content"
     tools:context="ca.justinrichard.link.ContactFragment">
 
-    <ListView
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/contactsListView"
-        android:divider="?android:attr/listDivider"
-        android:headerDividersEnabled="false"
-        android:footerDividersEnabled="false" />
+        android:layout_height="match_parent">
+        <ListView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/contactsListView"
+            android:divider="?android:attr/listDivider"
+            android:headerDividersEnabled="false"
+            android:footerDividersEnabled="false" >
+        </ListView>
+        <TextView
+            android:text="No contacts yet :("
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="40dp"
+            android:visibility="invisible"
+            android:id="@+id/empty"
+            android:textSize="20dp" />
+    </RelativeLayout>
 </android.support.v4.widget.SwipeRefreshLayout>
 

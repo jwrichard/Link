@@ -45,7 +45,7 @@ public class ContactAdapter extends ArrayAdapter<Contact> {
 
         // Get singleton instance of image loader and use it to load and set the image for the contact
         ImageLoader imageLoader = ImageLoader.getInstance();
-        imageLoader.displayImage(contact.imageUrl, iv);
+        if(contact.imageUrl != null) imageLoader.displayImage(contact.imageUrl, iv);
 
         // Return the completed view to render on screen
         return convertView;

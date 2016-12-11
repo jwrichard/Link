@@ -70,6 +70,7 @@ public class MyFirebaseInstanceIDService extends FirebaseInstanceIdService {
 
         @Override
         protected Void doInBackground(Void... params) {
+            Log.i(TAG, "Calling DB store for my registration token");
             db.StoreFirebaseInstanceId(userId, token);
             return null;
         }
