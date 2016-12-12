@@ -21,4 +21,9 @@
         android:visible="false"
         android:icon="@drawable/ic_action_resume"
         app:showAsAction="ifRoom"/>
+    <item
+        android:id="@+id/action_add"
+        android:orderInCategory="400"
+        android:title="Add member"
+        app:showAsAction="never"/>
 </menu>

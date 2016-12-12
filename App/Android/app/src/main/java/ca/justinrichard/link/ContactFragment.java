@@ -284,7 +284,7 @@ public class ContactFragment extends Fragment {
                 dynamoDBMapper.save(pYou);
 
                 // Call a refresh on the link fragment
-                mListener.onContactFragmentNewLinkCreated();
+                mListener.onContactFragmentNewLinkCreated(linkId);
                 return true;
             } catch (Exception e){
                 Log.i(TAG, "Caught exception: "+e);
@@ -345,6 +345,6 @@ public class ContactFragment extends Fragment {
      */
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
-        void onContactFragmentNewLinkCreated();
+        void onContactFragmentNewLinkCreated(String s);
     }
 }

@@ -10,6 +10,7 @@ import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -20,6 +21,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
@@ -91,6 +93,9 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
     // Update rates
     private int updateRate;
     private Handler mHandler;
+
+    // Dialog for adding members
+    private android.app.AlertDialog dialog;
 
     // Initial location
     private Location mLastLocation;
@@ -236,6 +241,28 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
             MenuItem mResume = mMenu.findItem(R.id.action_resume);
             mPause.setVisible(true);
             mResume.setVisible(false);
+            return true;
+        }
+        if (id == R.id.action_add) {
+            // Open a prompt for a username
+            android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(LinkActivity.this);
+            final View view = getLayoutInflater().inflate(R.layout.contact_prompt, null);
+            builder.setView(view);
+            builder.setMessage("Enter a username to add to this link session").setTitle("Add a member");
+            builder.setPositiveButton("Submit", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    // User clicked OK button - call async task to add contact and reprompt on failure
+                    EditText usernameTextEdit = (EditText) view.findViewById(R.id.username);
+                    new LinkActivity.addMember(usernameTextEdit.getText().toString()).execute();
+                }
+            });
+            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int id) {
+                    // User cancelled the dialog
+                }
+            });
+            dialog = builder.create();
+            dialog.show();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -494,6 +521,48 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
             mProgressBar.setProgress(updateRate*40);
             adapter.notifyDataSetChanged();
             mSwipeRefreshLayout.setRefreshing(false);
+        }
+    }
+
+    // Async task to add a member to the group and re-prompt on failure
+    public class addMember extends AsyncTask<Void, Void, Boolean> {
+        DynamoDB db = new DynamoDB();
+        String userId = AWSMobileClient.defaultMobileClient().getIdentityManager().getCachedUserID();
+        String username;
+
+        public addMember(String username){
+            this.username = username;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... params) {
+            UsersDO you = db.GetUserFromUsername(username);
+            if(you == null){
+                return false;
+            } else {
+                final DynamoDBMapper dynamoDBMapper = AWSMobileClient.defaultMobileClient().getDynamoDBMapper();
+                // Create participant for other user
+                ParticipantsDO pYou = new ParticipantsDO();
+                pYou.setUserId(you.getUserId());
+                pYou.setLastUpdate(0.0);
+                pYou.setLat(0.0);
+                pYou.setLong(0.0);
+                pYou.setAltitude(0.0);
+                pYou.setLinkId(linkId);
+                return true;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean success) {
+            if(success){
+                refreshContent();
+                Toast.makeText(getApplicationContext(), "Member added", Toast.LENGTH_SHORT).show();
+            } else {
+                // Edit the dialog and re-prompt
+                dialog.setMessage("Unable to find user with that username. Please try again.");
+                dialog.show();
+            }
         }
     }
 

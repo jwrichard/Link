@@ -38,10 +38,14 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
      * may be best to switch to a
      * {@link android.support.v4.app.FragmentStatePagerAdapter}.
      */
+
+    public final static String LINK_ID = "ca.justinrichard.link.MESSAGE";
+
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private FragmentManager mFragmentManager;
 
     private ContactFragment mCF;
+    private LinkFragment mLF;
 
     private FloatingActionMenu mMenu;
     private FloatingActionButton mFab, mSubFab1, mSubFab2;
@@ -71,12 +75,13 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
     }
 
     // Called from ContactFragment when a new Link session is created to update the links fragment
-    public void onContactFragmentNewLinkCreated(){
-        LinkFragment fragment = (LinkFragment) getSupportFragmentManager().findFragmentById(R.id.swiperefreshlinks);
-        if(fragment != null) {
-            fragment.refreshContent();
+    public void onContactFragmentNewLinkCreated(String linkId){
+        if(mCF != null) {
+            mCF.refreshContent();
         } else {
-            Toast.makeText(getApplicationContext(), "Unable to automatically refresh Links", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, LinkActivity.class);
+            intent.putExtra(LINK_ID, linkId);
+            startActivity(intent);
         }
     }
 
@@ -161,7 +166,6 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
                     // User cancelled the dialog
                 }
             });
-
             dialog = builder.create();
             dialog.show();
             }
@@ -244,7 +248,7 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
             // getItem is called to instantiate the fragment for the given page.
             switch(position){
                 case 0: return mCF = ContactFragment.newInstance();
-                case 1: return LinkFragment.newInstance();
+                case 1: return mLF = LinkFragment.newInstance();
                 case 2: return SettingsFragment.newInstance();
                 default: return ContactFragment.newInstance();
             }

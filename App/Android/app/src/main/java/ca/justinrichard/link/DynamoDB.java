@@ -1,5 +1,7 @@
 package ca.justinrichard.link;
 
+import android.util.Log;
+
 import com.amazonaws.mobile.AWSMobileClient;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBMapper;
 import com.amazonaws.mobileconnectors.dynamodbv2.dynamodbmapper.DynamoDBQueryExpression;
@@ -151,10 +153,14 @@ public class DynamoDB {
 
     // Stores a firebase instance Id for a user
     public void StoreFirebaseInstanceId(String userId, String firebaseInstanceId){
-        FirebaseDO f = new FirebaseDO();
-        f.setUserId(userId);
-        f.setFirebaseInstanceId(firebaseInstanceId);
-        dynamoDBMapper.save(f);
+        try {
+            FirebaseDO f = new FirebaseDO();
+            f.setUserId(userId);
+            f.setFirebaseInstanceId(firebaseInstanceId);
+            dynamoDBMapper.save(f);
+        } catch(Exception e){
+            Log.e("DynamoDB Class", "No userId, failed to save firebase id");
+        }
     }
 
     public String GetFirebaseTokenFromUserId(String userId){
