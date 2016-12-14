@@ -1,7 +1,7 @@
 <?php
 
 // API access key from Google API's Console
-define( 'API_ACCESS_KEY', 'AAAAYEOeJiA:APA91bGh-IDvHiEgn16-xnNgwjvCNN50UtcX3m2pI7TPL1PRscJ2mADfCYne1ch4evunoWUMOVuX9eK8IVBXodWfi_Wg7-ZMAjfo8TtzBriJZm3JlCc1cnLjeKCKlewdTpG8o2hvA3zioWlGsFdl9EZZX1adEGRqmg' );
+define( 'API_ACCESS_KEY', '***KEY_REMOVED***' );
 
 $registrationIds = array( $_GET['id'] );
 
