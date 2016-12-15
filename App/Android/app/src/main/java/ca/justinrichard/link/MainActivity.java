@@ -76,9 +76,11 @@ public class MainActivity extends AppCompatActivity implements ContactFragment.O
 
     // Called from ContactFragment when a new Link session is created to update the links fragment
     public void onContactFragmentNewLinkCreated(String linkId){
-        if(mCF != null) {
-            mCF.refreshContent();
+        if(mLF != null) {
+            Log.i(TAG, "Got link fragment, calling a refresh");
+            mLF.refreshContent();
         } else {
+            Log.i(TAG, "Failed to get link fragment, so opening Link activity right away");
             Intent intent = new Intent(this, LinkActivity.class);
             intent.putExtra(LINK_ID, linkId);
             startActivity(intent);

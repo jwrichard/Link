@@ -55,7 +55,7 @@ public class ParticipantAdapter extends ArrayAdapter<Participant> {
         // Calculate and display distance and altitude to that user if set
         TextView distanceTextView = (TextView) convertView.findViewById(R.id.distance);
         //TextView altitudeDifference = (TextView) convertView.findViewById(R.id.altitudeDifference);
-        if(item.getLatitude() != 0 || item.getLongitude() != 0 || item.getAltitude() != 0){
+        if((item.getLatitude() != 0 || item.getLongitude() != 0 || item.getAltitude() != 0) && mLocation != null){
             Location theirLocation = new Location("");
             theirLocation.setAltitude(item.getAltitude());
             theirLocation.setLatitude(item.getLatitude());

@@ -369,7 +369,7 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
             LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationRequest, this);
             mLastLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
             // Move to my last location
-            if(mGoogleMap != null){
+            if(mGoogleMap != null && mLastLocation != null){
                 LatLng latlng = new LatLng(mLastLocation.getLatitude(), mLastLocation.getLongitude());
                 mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng, 17.f));
             }
@@ -549,6 +549,7 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
                 pYou.setLong(0.0);
                 pYou.setAltitude(0.0);
                 pYou.setLinkId(linkId);
+                dynamoDBMapper.save(pYou);
                 return true;
             }
         }

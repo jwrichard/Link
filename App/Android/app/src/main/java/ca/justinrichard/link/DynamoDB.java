@@ -97,7 +97,8 @@ public class DynamoDB {
                 imageUrl = user.getImageUrl();
                 // Make csv if more than 1 user
                 if(!first) s+= ", ";
-                s += user.getFirstName()+" "+user.getLastName();
+                if(numResults > 2) s += user.getFirstName();
+                else s += user.getFirstName()+" "+user.getLastName();
                 first = false;
             }
         }

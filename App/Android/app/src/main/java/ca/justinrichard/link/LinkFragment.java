@@ -200,6 +200,8 @@ public class LinkFragment extends Fragment {
             // Sort the array
             Collections.sort(listLinks, new Comparator<Link>() {
                 public int compare(Link o1, Link o2) {
+                    if(o1.getLastUpdateNum() == 0) return -1;
+                    if(o2.getLastUpdateNum() == 0) return 1;
                     if(o1.getLastUpdateNum() > o2.getLastUpdateNum()){
                         return -1;
                     } else {

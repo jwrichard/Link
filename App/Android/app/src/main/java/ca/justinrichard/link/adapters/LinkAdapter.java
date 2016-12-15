@@ -61,6 +61,8 @@ public class LinkAdapter extends ArrayAdapter<Link> {
             linkLastUpdate.setTypeface(null, Typeface.BOLD);
         } else {
             linkActive.setImageResource(R.drawable.ic_link_inactive);
+            groupAlias.setTypeface(null, Typeface.NORMAL);
+            linkLastUpdate.setTypeface(null, Typeface.NORMAL);
         }
 
         // Return the completed view to render on screen
