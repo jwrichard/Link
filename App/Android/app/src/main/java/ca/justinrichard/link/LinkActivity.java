@@ -103,6 +103,9 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
     Marker mCurrLocationMarker;
     LocationManager locationManager;
 
+    // LinkLooper trigger
+    boolean linkLooper = false;
+
     private final String TAG = "LinkActivity";
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -185,6 +188,7 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
         listView.setAdapter(adapter);
 
         // Start location services up
+        /*
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             checkLocationPermission();
@@ -192,7 +196,7 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                 showGPSDisabledAlertToUser();
             }
-        }
+        }*/
 
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
@@ -296,14 +300,24 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onPause() {
         super.onPause();
+        Log.i(TAG, "onResume called");
         // Stop location updates when Activity is no longer active
         if (mGoogleApiClient != null) {
             LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
         }
         // Stop runnables if running
         try {
+            Log.i(TAG, "ActivityPaused, stopping runnables");
             mHandler.removeCallbacks(mLooper);
             mHandler.removeCallbacks(mTimerDecrementor);
+            // Hide pause buttons and show resume button
+            if(mMenu != null) {
+                MenuItem mPause = mMenu.findItem(R.id.action_pause);
+                MenuItem mResume = mMenu.findItem(R.id.action_resume);
+                mPause.setVisible(false);
+                mResume.setVisible(true);
+            }
+            linkLooper = false;
         } catch(Exception e){
             Log.e(TAG, "Unable to stop runnables, already running");
         }
@@ -313,7 +327,8 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onResume() {
         super.onResume();  // Always call the superclass method first
-        // Start location updates when Activity is resumed
+        Log.i(TAG, "onResume called");
+        // Start location updates when Activity is resumed or initially started
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             checkLocationPermission();
@@ -321,6 +336,13 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                 showGPSDisabledAlertToUser();
             }
+        }
+        // Hide this menu item and show the pause button
+        if(mMenu != null){
+            MenuItem mPause = mMenu.findItem(R.id.action_pause);
+            MenuItem mResume = mMenu.findItem(R.id.action_resume);
+            mPause.setVisible(true);
+            mResume.setVisible(false);
         }
     }
 
@@ -395,23 +417,18 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     public boolean checkLocationPermission() {
+        Log.i(TAG, "Call to checkLocationPermission activated");
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // Should we show an explanation?
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, android.Manifest.permission.ACCESS_FINE_LOCATION)) {
-                // Show an expanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-                // Prompt the user once explanation has been shown
-                ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CHECK_SETTINGS);
-            } else {
-                // No explanation needed, we can request the permission.
-                ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CHECK_SETTINGS);
-            }
+            Log.i(TAG, "Permission not yet granted, asking for permission");
+            ActivityCompat.requestPermissions(this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION}, REQUEST_CHECK_SETTINGS);
             return false;
         } else {
+            Log.i(TAG, "Permission already granted, making sure GPS enabled for user");
             if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                Log.i(TAG, "GPS not enabled for user, showing prompt");
                 showGPSDisabledAlertToUser();
             }
+            linkLooper();
             return true;
         }
     }
@@ -422,8 +439,7 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
             case REQUEST_CHECK_SETTINGS: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
+                    // permission was granted, yay!
                     if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                         if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                             showGPSDisabledAlertToUser();
@@ -432,6 +448,7 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
                             buildGoogleApiClient();
                         }
                         mGoogleMap.setMyLocationEnabled(true);
+                        linkLooper();
                     }
                 } else {
                     // permission denied, boo! Disable the
@@ -448,16 +465,21 @@ public class LinkActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     // Loops through creating async tasks while activity active
     public void linkLooper() {
-        // Get update rates from user preferences
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        updateRate = prefs.getInt("data_link_refresh_rate", 30);
-        mProgressBar.setMax(updateRate*40);
-        mProgressBar.setProgress(updateRate*40);
+        Log.i(TAG, "LinkLooper called");
+        if(!linkLooper){
+            Log.i(TAG, "LinkLooper passed, starting runnables");
+            // Get update rates from user preferences
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            updateRate = prefs.getInt("data_link_refresh_rate", 30);
+            mProgressBar.setMax(updateRate * 40);
+            mProgressBar.setProgress(updateRate * 40);
 
-        // Run async tasks to call updates periodically
-        mHandler = new Handler();
-        mLooper.run();
-        mTimerDecrementor.run();
+            // Run async tasks to call updates periodically
+            mHandler = new Handler();
+            mLooper.run();
+            mTimerDecrementor.run();
+            linkLooper = true;
+        }
     }
 
     // Called when an update is forced by the user
