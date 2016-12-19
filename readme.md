@@ -2,6 +2,7 @@
 
 ## Description
 Link is application designed to help you efficiently find or meet up with your friends or family. Link allows you to share real time updates on current locations to effectively connect with others. You choose who and when you want to Link with. 
+- [YouTube App Demo](https://www.youtube.com/watch?v=gg84969MnB8)
 
 ## Deliverables
 - [Design Document](DesignDocument.pdf)
