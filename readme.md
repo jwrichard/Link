@@ -1,4 +1,5 @@
 # Link
+** Note: App will no longer function, back-end database has been removed to save AWS costs :) **
 
 ## Description
 Link is application designed to help you efficiently find or meet up with your friends or family. Link allows you to share real time updates on current locations to effectively connect with others. You choose who and when you want to Link with. 
